@@ -101,9 +101,9 @@ npm install @picocss/pico
         {% block javascripts %}  
             {{ encore_entry_script_tags('app') }}  
         {% endblock %}  
-    
+  
     </head>  
-    <body>    
+    <body>  
 	    <html id="theme" data-theme="light">  
             <main class="container">  
                 {% block body %}  
@@ -217,19 +217,19 @@ New property name (press <return> to stop adding fields):
 
 What type of relationship is this?
  ------------ ----------------------------------------------------------------- 
-  Type         Description                                                  
+  Type         Description                                              
  ------------ ----------------------------------------------------------------- 
-  ManyToOne    Each Post relates to (has) one User.                         
-               Each User can relate to (can have) many Post objects.        
-                                                                            
-  OneToMany    Each Post can relate to (can have) many User objects.        
-               Each User relates to (has) one Post.                         
-                                                                            
-  ManyToMany   Each Post can relate to (can have) many User objects.        
+  ManyToOne    Each Post relates to (has) one User.                     
+               Each User can relate to (can have) many Post objects.    
+                                                                        
+  OneToMany    Each Post can relate to (can have) many User objects.    
+               Each User relates to (has) one Post.                     
+                                                                        
+  ManyToMany   Each Post can relate to (can have) many User objects.    
                Each User can also relate to (can also have) many Post objects.  
-                                                                            
-  OneToOne     Each Post relates to (has) exactly one User.                 
-               Each User also relates to (has) exactly one Post.            
+                                                                        
+  OneToOne     Each Post relates to (has) exactly one User.             
+               Each User also relates to (has) exactly one Post.        
  ------------ ----------------------------------------------------------------- 
 
  Relation type? [ManyToOne, OneToMany, ManyToMany, OneToOne]:
@@ -281,19 +281,19 @@ symfony console make:entity Theme
 
 What type of relationship is this?
  ------------ ------------------------------------------------------------------ 
-  Type         Description                                                   
+  Type         Description                                               
  ------------ ------------------------------------------------------------------ 
-  ManyToOne    Each Theme relates to (has) one Post.                         
-               Each Post can relate to (can have) many Theme objects.        
-                                                                             
-  OneToMany    Each Theme can relate to (can have) many Post objects.        
-               Each Post relates to (has) one Theme.                         
-                                                                             
-  ManyToMany   Each Theme can relate to (can have) many Post objects.        
+  ManyToOne    Each Theme relates to (has) one Post.                     
+               Each Post can relate to (can have) many Theme objects.    
+                                                                         
+  OneToMany    Each Theme can relate to (can have) many Post objects.    
+               Each Post relates to (has) one Theme.                     
+                                                                         
+  ManyToMany   Each Theme can relate to (can have) many Post objects.    
                Each Post can also relate to (can also have) many Theme objects.  
-                                                                             
-  OneToOne     Each Theme relates to (has) exactly one Post.                 
-               Each Post also relates to (has) exactly one Theme.            
+                                                                         
+  OneToOne     Each Theme relates to (has) exactly one Post.             
+               Each Post also relates to (has) exactly one Theme.        
  ------------ ------------------------------------------------------------------ 
 
  Relation type? [ManyToOne, OneToMany, ManyToMany, OneToOne]:
@@ -334,7 +334,6 @@ symfony console d:m:m
 Ça y est, notre base de donnée est prête.
 
 Nous allons maintenant créer un fichier de Fixture, qui va nous permettre de remplir notre base de données de fausses données.
-
 
 ### Faker :
 
@@ -431,3 +430,214 @@ symfony doctrine:fixtures:load
 ```
 
 La base de données est désormais peuplé de fausses données test.
+
+## FRONT :
+
+Un peu de front et du crud avec nos contrôleurs  :
+
+### Authentification :
+
+Nous allons maintenant créer une authentification avec :
+
+```bash
+symfony console make:auth
+```
+
+```bash
+ What style of authentication do you want? [Empty authenticator]:
+  [0] Empty authenticator
+  [1] Login form authenticator
+ > 1
+
+ The class name of the authenticator to create (e.g. AppCustomAuthenticator):
+ > AppAuthentification
+
+ Choose a name for the controller class (e.g. SecurityController) [SecurityController]:
+ > 
+
+ Do you want to generate a '/logout' URL? (yes/no) [yes]:
+ > 
+
+ Do you want to support remember me? (yes/no) [yes]:
+ > no
+
+
+```
+
+### Enregistrement :
+
+Nous allons créer un formulaire de création de compte et gérer la vérification de mail. pour ce faire, nous allons utiliser la configuration proposé par Symfony.
+
+Afin de tester nos emails, nous allons utiliser un fichier compose.yaml :
+
+```yaml
+version: '3'  
+  
+services:  
+  ###> symfony/mailer ###  
+  mailer:  
+    image: axllent/mailpit  
+    ports:  
+      - "1025:1025"  # Port SMTP  
+      - "8025:8025"  # Port webmail  
+    environment:  
+      MP_SMTP_AUTH_ACCEPT_ANY: 1  
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1  
+  ###< symfony/mailer ###
+```
+
+Nous configurons aussi notre .env.local en ajoutant :
+
+```
+MAILER_DSN=smtp://localhost:1025
+```
+
+Installation le bundle nécessaire pour la confirmation par mail :
+
+```bash
+composer require symfonycasts/verify-email-bundle  
+```
+
+Pour créer notre formulaire d'enregistrement :
+
+```bash
+symfony console make:registration
+```
+
+```bash
+
+ Do you want to add a #[UniqueEntity] validation attribute to your User class to make sure duplicate accounts aren't created? (yes/no) [yes]:
+ >  yes
+
+ Do you want to send an email to verify the user's email address after registration? (yes/no) [yes]:
+ > yes
+
+ Would you like to include the user id in the verification link to allow anonymous email verification? (yes/no) [no]:
+ > no
+
+ What email address will be used to send registration confirmations? (e.g. mailer@your-domain.com):
+ > test@test.com
+
+ What "name" should be associated with that email address? (e.g. Acme Mail Bot):
+ > BlogBot
+
+ Do you want to automatically authenticate the user after registration? (yes/no) [yes]: yes
+ > 
+
+```
+
+Note : Nous devons ajouter un setIsVerified à notre fixture :
+
+```php
+$user->setRoles(["ROLE_USER"])  
+    ->setIsVerified(true)
+```
+
+Modifions notre formulaire d'enregistrement afin de coller aux besoins de notre entity :
+
+```php
+public function buildForm(FormBuilderInterface $builder, array $options): void  
+{  
+    $builder  
+        ->add('email')  
+        ->add('name', TextType::class,[  
+            'label' => 'Prénom',  
+            'attr' => [  
+                'placeholder' => 'Votre prénom'  
+            ]  
+        ])  
+        ->add('surname', TextType::class,[  
+            'label' => 'Nom',  
+            'attr' => [  
+                'placeholder' => 'Votre nom'  
+            ]  
+        ])  
+        ->add('agreeTerms', CheckboxType::class, [  
+                            'mapped' => false,  
+            'constraints' => [  
+                new IsTrue([  
+                    'message' => 'You should agree to our terms.',  
+                ]),  
+            ],  
+        ])  
+        ->add('plainPassword', PasswordType::class, [  
+            // instead of being set onto the object directly,  
+            // this is read and encoded in the controller            'mapped' => false,  
+            'attr' => ['autocomplete' => 'new-password'],  
+            'constraints' => [  
+                new NotBlank([  
+                    'message' => 'Please enter a password',  
+                ]),  
+                new Length([  
+                    'min' => 6,  
+                    'minMessage' => 'Your password should be at least {{ limit }} characters',  
+                    // max length allowed by Symfony for security reasons  
+                    'max' => 4096,  
+                ]),  
+            ],  
+        ])  
+        ->add('submit', SubmitType::class, [  
+            'label' => 'S\'inscrire',  
+            'attr' => [  
+                'class' => 'btn btn-primary'  
+            ]  
+        ]);  
+}
+
+```
+
+Et dans le contrôleur, il nous faut gérer la gestion du lastIntercation :
+
+```php
+$user->setLastInteraction(new \DateTime())
+```
+
+Mais n'oublions pas aussi de traiter le consentement :
+
+```php
+if($form->get('agreeTerms')->getData() === true)  
+{  
+    $user->setConsent(true);  
+}
+```
+
+Les mails étant envoyé en asynchrone, il est parfois utile, pour pouvoir les visualiser d'utiliser cette commande :
+
+```bash
+symfony console messenger:consume 
+```
+
+Cette commande est utilisée pour démarrer le processus de traitement des messages en attente dans la file d'attente de messagerie. Cela exécute les handlers associés aux messages de manière asynchrone.
+
+Nous désactivons la connexion automatique après l'enregistrement.
+Dans RegistrationController.php :
+
+```php
+//            return $userAuthenticator->authenticateUser(  
+//                $user,  
+//                $authenticator,  
+//                $request  
+//            );  
+                return $this->redirectToRoute('app_login');
+
+```
+
+Vérifions aussi si l'utilisateur est vérifié après la connection et laissons lui un message.
+Dans mon controller app_home :
+
+```php
+if(!$this->getUser()->isverified() === true)  
+{  
+    $this->addFlash('warning', 'Veuillez confirmer votre adresse e-mail pour accéder à votre compte.');  
+}
+```
+
+Et dans le template :
+
+```html
+{% for message in app.flashes('warning') %}  
+    <div class="warning">  
+        {{ message }}  
+    </div>  
+{% endfor %}
+```

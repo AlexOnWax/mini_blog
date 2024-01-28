@@ -1,0 +1,14 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hello HomeController!{% endblock %}
+
+{% block body %}
+<h1>Home</h1>
+
+    {% for message in app.flashes('warning') %}
+        <div class="warning">
+            {{ message }}
+        </div>
+    {% endfor %}
+
+{% endblock %}
