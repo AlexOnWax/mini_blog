@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hello HomeController!{% endblock %}
+
+{% block body %}
+        <h1>{{ theme }}</h1>
+        <ul>
+        {% for post in posts %}
+                <article>
+                        <header>{{ post.title }}</header>
+                        {{ post.content }}
+                        <footer>Créé par {{ post.user.name }}  le {{ post.getCreatedAt()|date('Y-m-d') }}</footer>
+                </article>
+        {% endfor %}
+        </ul>
+{% endblock %}

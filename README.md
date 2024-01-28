@@ -217,19 +217,19 @@ New property name (press <return> to stop adding fields):
 
 What type of relationship is this?
  ------------ ----------------------------------------------------------------- 
-  Type         Description                                              
+  Type         Description                                            
  ------------ ----------------------------------------------------------------- 
-  ManyToOne    Each Post relates to (has) one User.                     
-               Each User can relate to (can have) many Post objects.    
-                                                                        
-  OneToMany    Each Post can relate to (can have) many User objects.    
-               Each User relates to (has) one Post.                     
-                                                                        
-  ManyToMany   Each Post can relate to (can have) many User objects.    
+  ManyToOne    Each Post relates to (has) one User.                   
+               Each User can relate to (can have) many Post objects.  
+                                                                      
+  OneToMany    Each Post can relate to (can have) many User objects.  
+               Each User relates to (has) one Post.                   
+                                                                      
+  ManyToMany   Each Post can relate to (can have) many User objects.  
                Each User can also relate to (can also have) many Post objects.  
-                                                                        
-  OneToOne     Each Post relates to (has) exactly one User.             
-               Each User also relates to (has) exactly one Post.        
+                                                                      
+  OneToOne     Each Post relates to (has) exactly one User.           
+               Each User also relates to (has) exactly one Post.      
  ------------ ----------------------------------------------------------------- 
 
  Relation type? [ManyToOne, OneToMany, ManyToMany, OneToOne]:
@@ -281,19 +281,19 @@ symfony console make:entity Theme
 
 What type of relationship is this?
  ------------ ------------------------------------------------------------------ 
-  Type         Description                                               
+  Type         Description                                             
  ------------ ------------------------------------------------------------------ 
-  ManyToOne    Each Theme relates to (has) one Post.                     
-               Each Post can relate to (can have) many Theme objects.    
-                                                                         
-  OneToMany    Each Theme can relate to (can have) many Post objects.    
-               Each Post relates to (has) one Theme.                     
-                                                                         
-  ManyToMany   Each Theme can relate to (can have) many Post objects.    
+  ManyToOne    Each Theme relates to (has) one Post.                   
+               Each Post can relate to (can have) many Theme objects.  
+                                                                       
+  OneToMany    Each Theme can relate to (can have) many Post objects.  
+               Each Post relates to (has) one Theme.                   
+                                                                       
+  ManyToMany   Each Theme can relate to (can have) many Post objects.  
                Each Post can also relate to (can also have) many Theme objects.  
-                                                                         
-  OneToOne     Each Theme relates to (has) exactly one Post.             
-               Each Post also relates to (has) exactly one Theme.        
+                                                                       
+  OneToOne     Each Theme relates to (has) exactly one Post.           
+               Each Post also relates to (has) exactly one Theme.      
  ------------ ------------------------------------------------------------------ 
 
  Relation type? [ManyToOne, OneToMany, ManyToMany, OneToOne]:
@@ -635,9 +635,78 @@ if(!$this->getUser()->isverified() === true)
 Et dans le template :
 
 ```html
+
 {% for message in app.flashes('warning') %}  
     <div class="warning">  
         {{ message }}  
     </div>  
 {% endfor %}
+
+
+```
+
+
+Dans notre home page, listons pour commencer les noms de nos 3 thèmes.
+Dans le contrôleur il faut d'abord que l'on récupère le liste dans notre BDD.
+
+```php
+$themes = $themeRepository->findAll();  
+return $this->render('home/index.html.twig', [  
+    'themes' => $themes  
+]);
+```
+
+Dans notre template home nous pouvons boucler avec Twig sur nos thèmes :
+
+```html
+<ul>  
+{% for theme in themes %}  
+    <li> {{ theme.nom }}</li>  
+{% endfor %}  
+</ul>
+```
+
+C'est une premiere étape, mais il serait intéressant de pouvoir ajouter des liens et d'afficher la page du thème avec les posts associés.
+
+Pour cela nous allons retravailler dans notre HomeController.php.
+
+```php
+#[Route('/theme/{id}', name: 'app_theme')]  
+public function theme(Theme $theme): Response  
+{  
+    $themeName = $theme->getNom();  
+    $posts = $theme->getPost();  
+    return $this->render('theme/theme.html.twig', [  
+        'theme' => $themeName,  
+        'posts' => $posts  
+    ]);  
+}
+```
+
+```html
+{% block body %}  
+        <h1>{{ theme }}</h1>  
+        <ul>      
+        {% for post in posts %}  
+                <article>  
+                        <header>{{ post.title }}</header>  
+                        {{ post.content }}  
+                        <footer>Créé par {{ post.user.name }}  le {{ post.getCreatedAt()|date('Y-m-d') }}</footer>  
+                </article>  
+        {% endfor %}  
+        </ul>  
+{% endblock %}
+
+```
+
+Et changeons notre template home avec les liens :
+
+```html
+<ul>  
+{% for theme in themes %}  
+    <li>  
+        <a href="{{ path('app_theme', {'id': theme.id}) }}">{{ theme.nom }}</a>  
+    </li>  
+{% endfor %}  
+</ul>
 ```
