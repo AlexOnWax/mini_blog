@@ -58,6 +58,18 @@ symfony new mini_blog --webapp
 ```bash
 cd mini_blog
 ```
+Ajout d'un .env.local :
+
+```env
+DATABASE_URL=mysql://root:root@127.0.0.1:8889/mini_blog?charset=utf8mb4
+```
+
+Et création de la database :
+
+```bash
+symfony console doctrine:database:create 
+```
+
 
 ### Installons Webpack ENCORE :
 
