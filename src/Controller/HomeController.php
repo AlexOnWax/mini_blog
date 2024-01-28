@@ -25,7 +25,7 @@ class HomeController extends AbstractController
         ]);
     }
 
-    #[Route('/theme/{id}', name: 'app_theme')]
+    #[Route('/theme/{slug}', name: 'app_theme')]
     public function theme(Theme $theme): Response
     {
         $themeName = $theme->getNom();

@@ -7,6 +7,7 @@ use App\Entity\Post;
 use App\Entity\Theme;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Faker\Factory;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 use App\Entity\User;
 
@@ -18,7 +19,7 @@ class AppFixtures extends Fixture
     protected $encoder;
 
     //nous avons besoin de l'encodeur pour encoder les mots de passe
-    public function __construct(UserPasswordHasherInterface $encoder)
+    public function __construct(UserPasswordHasherInterface $encoder,private SluggerInterface $slugger)
     {
         $this->encoder = $encoder;
     }
@@ -32,6 +33,7 @@ class AppFixtures extends Fixture
         for ($t = 0; $t < 3; $t++) {
             $theme = new Theme();
             $theme->setNom($faker->sentence());
+            $theme->setSlug($this->slugger->slug($theme->getNom())->lower());
             $manager->persist($theme);
             $themes[] = $theme; // Nous les enregistrons dans un tableau
         }

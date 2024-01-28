@@ -16,6 +16,9 @@ class Theme
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    private ?string $slug = null;
+
+    #[ORM\Column(length: 255)]
     private ?string $nom = null;
 
     #[ORM\ManyToMany(targetEntity: Post::class, inversedBy: 'themes')]
@@ -39,6 +42,17 @@ class Theme
     public function setNom(string $nom): static
     {
         $this->nom = $nom;
+
+        return $this;
+    }
+    public function getSlug(): ?string
+    {
+        return $this->slug;
+    }
+
+    public function setSlug(string $slug): static
+    {
+        $this->slug = $slug;
 
         return $this;
     }

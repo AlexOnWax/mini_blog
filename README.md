@@ -217,19 +217,19 @@ New property name (press <return> to stop adding fields):
 
 What type of relationship is this?
  ------------ ----------------------------------------------------------------- 
-  Type         Description                                            
+  Type         Description                                          
  ------------ ----------------------------------------------------------------- 
-  ManyToOne    Each Post relates to (has) one User.                   
+  ManyToOne    Each Post relates to (has) one User.                 
                Each User can relate to (can have) many Post objects.  
-                                                                      
+                                                                    
   OneToMany    Each Post can relate to (can have) many User objects.  
-               Each User relates to (has) one Post.                   
-                                                                      
+               Each User relates to (has) one Post.                 
+                                                                    
   ManyToMany   Each Post can relate to (can have) many User objects.  
                Each User can also relate to (can also have) many Post objects.  
-                                                                      
-  OneToOne     Each Post relates to (has) exactly one User.           
-               Each User also relates to (has) exactly one Post.      
+                                                                    
+  OneToOne     Each Post relates to (has) exactly one User.         
+               Each User also relates to (has) exactly one Post.    
  ------------ ----------------------------------------------------------------- 
 
  Relation type? [ManyToOne, OneToMany, ManyToMany, OneToOne]:
@@ -281,19 +281,19 @@ symfony console make:entity Theme
 
 What type of relationship is this?
  ------------ ------------------------------------------------------------------ 
-  Type         Description                                             
+  Type         Description                                           
  ------------ ------------------------------------------------------------------ 
-  ManyToOne    Each Theme relates to (has) one Post.                   
+  ManyToOne    Each Theme relates to (has) one Post.                 
                Each Post can relate to (can have) many Theme objects.  
-                                                                       
+                                                                     
   OneToMany    Each Theme can relate to (can have) many Post objects.  
-               Each Post relates to (has) one Theme.                   
-                                                                       
+               Each Post relates to (has) one Theme.                 
+                                                                     
   ManyToMany   Each Theme can relate to (can have) many Post objects.  
                Each Post can also relate to (can also have) many Theme objects.  
-                                                                       
-  OneToOne     Each Theme relates to (has) exactly one Post.           
-               Each Post also relates to (has) exactly one Theme.      
+                                                                     
+  OneToOne     Each Theme relates to (has) exactly one Post.         
+               Each Post also relates to (has) exactly one Theme.    
  ------------ ------------------------------------------------------------------ 
 
  Relation type? [ManyToOne, OneToMany, ManyToMany, OneToOne]:
@@ -645,7 +645,6 @@ Et dans le template :
 
 ```
 
-
 Dans notre home page, listons pour commencer les noms de nos 3 thèmes.
 Dans le contrôleur il faut d'abord que l'on récupère le liste dans notre BDD.
 
@@ -686,7 +685,7 @@ public function theme(Theme $theme): Response
 ```html
 {% block body %}  
         <h1>{{ theme }}</h1>  
-        <ul>      
+        <ul>    
         {% for post in posts %}  
                 <article>  
                         <header>{{ post.title }}</header>  
@@ -710,3 +709,70 @@ Et changeons notre template home avec les liens :
 {% endfor %}  
 </ul>
 ```
+
+
+Pour finir avec nos liens thème, il serait préférable d'utiliser des slugs plutôt que l'id
+
+Dans notre entity theme ajoutons :
+
+```php
+
+#[ORM\Column(length: 255)]  
+private ?string $slug = null;
+
+public function getSlug(): ?string  
+{  
+    return $this->slug;  
+}  
+  
+public function setSlug(string $slug): static  
+{  
+    $this->slug = $slug;  
+  
+    return $this;  
+}
+
+```
+
+Nous allons évidement créer un fichier de migration et faire la migration
+
+Puis nous modifions notre Fixture :
+
+```php
+use Symfony\Component\String\Slugger\SluggerInterface;
+```
+
+```php
+public function __construct(UserPasswordHasherInterface $encoder,private SluggerInterface $slugger)  
+{  
+    $this->encoder = $encoder;  
+}
+
+for ($t = 0; $t < 3; $t++) {  
+    $theme = new Theme();  
+    $theme->setNom($faker->sentence());  
+    $theme->setSlug($this->slugger->slug($theme->getNom())->lower());  
+    $manager->persist($theme);  
+    $themes[] = $theme;  
+}
+```
+
+Modifions le configuration de notre route :
+
+```php
+#[Route('/theme/{slug}', name: 'app_theme')]
+```
+
+et notre template :
+
+```php
+<ul>  
+{% for theme in themes %}  
+    <li>  
+        <a href="{{ path('app_theme', {'slug': theme.slug}) }}">{{ theme.nom }}</a>  
+    </li>  
+{% endfor %}  
+</ul>
+```
+
+Désormais notre route ne ressemble plus à /theme/12 mais à /theme/nom-du-theme

@@ -14,7 +14,7 @@
     <ul>
     {% for theme in themes %}
         <li>
-            <a href="{{ path('app_theme', {'id': theme.id}) }}">{{ theme.nom }}</a>
+            <a href="{{ path('app_theme', {'slug': theme.slug}) }}">{{ theme.nom }}</a>
         </li>
     {% endfor %}
     </ul>
