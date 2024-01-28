@@ -14,7 +14,7 @@ final class Version20240128212439 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return '';
+        return 'Ajout du slug sur la table theme';
     }
 
     public function up(Schema $schema): void
