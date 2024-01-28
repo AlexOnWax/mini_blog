@@ -5,46 +5,40 @@ Ce tutoriel va nous permettre de voir les bases de Symfony. Nous verrons comment
 ## Description du Projet :
 
 * Gestion des Utilisateurs : Les utilisateurs ont la possibilité de créer un compte en utilisant leur adresse email. Ils devront accepter les conditions générales lors de l'inscription.
-
 * Envoi d'Emails : Utilisation du composant Mailer pour envoyer des informations aux utilisateurs.
-
 * Création et Gestion de Posts : Les utilisateurs peuvent créer des posts, y ajouter un titre et un contenu, et gérer leur statut (de brouillon à publié).
-
 * Interaction avec les Posts : Les utilisateurs ont la capacité de 'liker' les posts.
-Navigation et Thèmes : La page d'accueil permettra de naviguer entre différents thèmes.
-
+  Navigation et Thèmes : La page d'accueil permettra de naviguer entre différents thèmes.
 * Gestion des Droits : Utilisation de voters pour vérifier les droits des utilisateurs.
-Frontend : Utilisation de Pico CSS (https://picocss.com) pour le design frontend.
+  Frontend : Utilisation de Pico CSS (https://picocss.com) pour le design frontend.
 
 Structure de la Base de Données :
 
-       Table User :
-        id : Identifiant unique de l'utilisateur.
-        nom : Nom de l'utilisateur.
-        prenom : Prénom de l'utilisateur.
-        email : Adresse email de l'utilisateur.
-        password : Mot de passe de l'utilisateur.
-        last_interaction : Dernière interaction de l'utilisateur avec le système.
-        consent : Consentement de l'utilisateur aux conditions générales.
+Table User :
+id : Identifiant unique de l'utilisateur.
+nom : Nom de l'utilisateur.
+prenom : Prénom de l'utilisateur.
+email : Adresse email de l'utilisateur.
+password : Mot de passe de l'utilisateur.
+last_interaction : Dernière interaction de l'utilisateur avec le système.
+consent : Consentement de l'utilisateur aux conditions générales.
 
-    Table Post :
-        Id : Identifiant unique du post.
-        user_id : Lien vers la Table User (identifiant de l'utilisateur qui a créé le post).
-        title : Titre du post.
-        likes : Nombre de "likes" du post.
-        content : Contenu du post.
-        created_at : Date et heure de création du post.
-        draft : Statut du post (brouillon ou publié).
+Table Post :
+Id : Identifiant unique du post.
+user_id : Lien vers la Table User (identifiant de l'utilisateur qui a créé le post).
+title : Titre du post.
+likes : Nombre de "likes" du post.
+content : Contenu du post.
+created_at : Date et heure de création du post.
+draft : Statut du post (brouillon ou publié).
 
-    Table Thème :
-        id : Identifiant unique du thème.
-        nom : Nom du thème.
+Table Thème :
+id : Identifiant unique du thème.
+nom : Nom du thème.
 
-    Table PostTheme (pour la relation many to many entre Post et Thème) :
-        post_id : Lien vers la Table Post (identifiant du post).
-        theme_id : Lien vers la Table Thème (identifiant du thème).
-
-
+Table PostTheme (pour la relation many to many entre Post et Thème) :
+post_id : Lien vers la Table Post (identifiant du post).
+theme_id : Lien vers la Table Thème (identifiant du thème).
 
 ## Initialiser le projet :
 
@@ -57,6 +51,7 @@ symfony new mini_blog --webapp
 ```bash
 cd mini_blog
 ```
+
 Ajout d'un .env.local :
 
 ```env
@@ -69,7 +64,6 @@ Et création de la database :
 symfony console doctrine:database:create 
 ```
 
-
 ### Installons Webpack ENCORE :
 
 ```bash
@@ -81,7 +75,6 @@ npm i
 ```
 
 ### Installons PicoCss :
-
 
 ```bash
 npm install @picocss/pico
@@ -108,9 +101,9 @@ npm install @picocss/pico
         {% block javascripts %}  
             {{ encore_entry_script_tags('app') }}  
         {% endblock %}  
-        
+    
     </head>  
-    <body>        
+    <body>    
 	    <html id="theme" data-theme="light">  
             <main class="container">  
                 {% block body %}  
@@ -119,6 +112,7 @@ npm install @picocss/pico
         </html>  
     </body>
 ```
+
 ## Mise en place des entités :
 
 ### Créons l'entity User :
@@ -143,7 +137,10 @@ The name of the security user class (e.g. User) [User]:
  > yes
 ```
 
+Nous ajoutons aussi le name (varchar), surname (varchar), last_interaction (date), is_verified(boolean)
+
 Nous avons créé l'entity User, un utilisateur se connectera avec son email, et nous avons décidé de hasher le mot de passe.
+
 ### Créons l'entity Post :
 
 ```bash
@@ -220,19 +217,19 @@ New property name (press <return> to stop adding fields):
 
 What type of relationship is this?
  ------------ ----------------------------------------------------------------- 
-  Type         Description                                                      
+  Type         Description                                                  
  ------------ ----------------------------------------------------------------- 
-  ManyToOne    Each Post relates to (has) one User.                             
-               Each User can relate to (can have) many Post objects.            
-                                                                                
-  OneToMany    Each Post can relate to (can have) many User objects.            
-               Each User relates to (has) one Post.                             
-                                                                                
-  ManyToMany   Each Post can relate to (can have) many User objects.            
+  ManyToOne    Each Post relates to (has) one User.                         
+               Each User can relate to (can have) many Post objects.        
+                                                                            
+  OneToMany    Each Post can relate to (can have) many User objects.        
+               Each User relates to (has) one Post.                         
+                                                                            
+  ManyToMany   Each Post can relate to (can have) many User objects.        
                Each User can also relate to (can also have) many Post objects.  
-                                                                                
-  OneToOne     Each Post relates to (has) exactly one User.                     
-               Each User also relates to (has) exactly one Post.                
+                                                                            
+  OneToOne     Each Post relates to (has) exactly one User.                 
+               Each User also relates to (has) exactly one Post.            
  ------------ ----------------------------------------------------------------- 
 
  Relation type? [ManyToOne, OneToMany, ManyToMany, OneToOne]:
@@ -284,19 +281,19 @@ symfony console make:entity Theme
 
 What type of relationship is this?
  ------------ ------------------------------------------------------------------ 
-  Type         Description                                                       
+  Type         Description                                                   
  ------------ ------------------------------------------------------------------ 
-  ManyToOne    Each Theme relates to (has) one Post.                             
-               Each Post can relate to (can have) many Theme objects.            
-                                                                                 
-  OneToMany    Each Theme can relate to (can have) many Post objects.            
-               Each Post relates to (has) one Theme.                             
-                                                                                 
-  ManyToMany   Each Theme can relate to (can have) many Post objects.            
+  ManyToOne    Each Theme relates to (has) one Post.                         
+               Each Post can relate to (can have) many Theme objects.        
+                                                                             
+  OneToMany    Each Theme can relate to (can have) many Post objects.        
+               Each Post relates to (has) one Theme.                         
+                                                                             
+  ManyToMany   Each Theme can relate to (can have) many Post objects.        
                Each Post can also relate to (can also have) many Theme objects.  
-                                                                                 
-  OneToOne     Each Theme relates to (has) exactly one Post.                     
-               Each Post also relates to (has) exactly one Theme.                
+                                                                             
+  OneToOne     Each Theme relates to (has) exactly one Post.                 
+               Each Post also relates to (has) exactly one Theme.            
  ------------ ------------------------------------------------------------------ 
 
  Relation type? [ManyToOne, OneToMany, ManyToMany, OneToOne]:
@@ -338,3 +335,99 @@ symfony console d:m:m
 
 Nous allons maintenant créer un fichier de Fixture, qui va nous permettre de remplir notre base de données de fausses données.
 
+
+### Faker :
+
+Mettons en place un fichier Faker afin de créer de fausse données, cela nous permettra de tester notre structure.
+
+```bash
+composer require --dev orm-fixtures
+```
+
+```bash
+composer require fakerphp/faker
+```
+
+Nous allon créer 3 themes,   5 utilisateurs, et chaques utilisateurs aura aléatoirement entre  2 et 5 posts. TODO
+
+```php
+<?php  
+  
+namespace App\DataFixtures;  
+  
+  
+use App\Entity\Post;  
+use App\Entity\Theme;  
+use Doctrine\Bundle\FixturesBundle\Fixture;  
+use Faker\Factory;  
+  
+use App\Entity\User;  
+  
+use Doctrine\Persistence\ObjectManager;  
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;  
+  
+class AppFixtures extends Fixture  
+{  
+    protected $encoder;  
+    //nous avons besoin de l'encodeur pour encoder les mots de passe  
+    public function __construct(UserPasswordHasherInterface $encoder)  
+    {  
+        $this->encoder = $encoder;  
+    }  
+    public function load(ObjectManager $manager): void  
+    {  
+        //Nous créons une instance de Faker en français  
+        $faker = Factory::create('fr_FR');  
+  
+        // Nous créons 3 themes  
+        $themes = [];  
+        for ($t = 0; $t < 3; $t++) {  
+            $theme = new Theme();  
+            $theme->setNom($faker->sentence());  
+            $manager->persist($theme);  
+            $themes[] = $theme; // Nous les enregistrons dans un tableau  
+        }  
+        // Nous créons 5 utilisateurs  
+        for ($u = 0; $u < 5; $u++) {  
+            $user = new User;  
+            $hash = $this->encoder->hashPassword($user, "password");  
+            $user->setRoles(["ROLE_USER"])  
+                ->setSurname($faker->lastName())  
+                ->setName($faker->firstName())  
+                ->setEmail($faker->email())  
+                ->setConsent(true)  
+                ->setLastInteraction(new \DateTime())  
+                ->setEmail($faker->email())  
+                ->setPassword($hash);  
+            $manager->persist($user);  
+            //Pour chaque utilisateur, nous créons entre 2 et 5 articles  
+            for ($p = 0; $p < mt_rand(2, 5); $p++) {  
+                $post = new Post();  
+                $post->setTitle($faker->sentence())  
+                    ->setContent($faker->paragraph(5))  
+                    ->setCreatedAt(new \DateTimeImmutable())  
+                    ->setDraft(false)  
+                    ->setLikes(0)  
+                    ->setUser($user);  
+                //Et nous affectons les themes au post aléatoirement  
+                $randomThemes = (array)array_rand($themes, mt_rand(1, 3));  
+                foreach ($randomThemes as $themeIndex) {  
+                    $post->addTheme($themes[$themeIndex]);  
+                }  
+                $manager->persist($post);  
+            }  
+        }  
+        // Nous enregistrons le tout en base de données  
+        $manager->flush();  
+  
+    }  
+}
+```
+
+#### Lançons  notre fixture :
+
+```bash
+symfony doctrine:fixtures:load
+```
+
+La base de données est désormais peuplé de fausses données test.
