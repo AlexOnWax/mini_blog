@@ -217,19 +217,19 @@ New property name (press <return> to stop adding fields):
 
 What type of relationship is this?
  ------------ ----------------------------------------------------------------- 
-  Type         Description                                          
+  Type         Description                                      
  ------------ ----------------------------------------------------------------- 
-  ManyToOne    Each Post relates to (has) one User.                 
+  ManyToOne    Each Post relates to (has) one User.             
                Each User can relate to (can have) many Post objects.  
-                                                                    
+                                                                
   OneToMany    Each Post can relate to (can have) many User objects.  
-               Each User relates to (has) one Post.                 
-                                                                    
+               Each User relates to (has) one Post.             
+                                                                
   ManyToMany   Each Post can relate to (can have) many User objects.  
                Each User can also relate to (can also have) many Post objects.  
-                                                                    
-  OneToOne     Each Post relates to (has) exactly one User.         
-               Each User also relates to (has) exactly one Post.    
+                                                                
+  OneToOne     Each Post relates to (has) exactly one User.     
+               Each User also relates to (has) exactly one Post.  
  ------------ ----------------------------------------------------------------- 
 
  Relation type? [ManyToOne, OneToMany, ManyToMany, OneToOne]:
@@ -281,19 +281,19 @@ symfony console make:entity Theme
 
 What type of relationship is this?
  ------------ ------------------------------------------------------------------ 
-  Type         Description                                           
+  Type         Description                                       
  ------------ ------------------------------------------------------------------ 
-  ManyToOne    Each Theme relates to (has) one Post.                 
+  ManyToOne    Each Theme relates to (has) one Post.             
                Each Post can relate to (can have) many Theme objects.  
-                                                                     
+                                                                 
   OneToMany    Each Theme can relate to (can have) many Post objects.  
-               Each Post relates to (has) one Theme.                 
-                                                                     
+               Each Post relates to (has) one Theme.             
+                                                                 
   ManyToMany   Each Theme can relate to (can have) many Post objects.  
                Each Post can also relate to (can also have) many Theme objects.  
-                                                                     
-  OneToOne     Each Theme relates to (has) exactly one Post.         
-               Each Post also relates to (has) exactly one Theme.    
+                                                                 
+  OneToOne     Each Theme relates to (has) exactly one Post.     
+               Each Post also relates to (has) exactly one Theme.  
  ------------ ------------------------------------------------------------------ 
 
  Relation type? [ManyToOne, OneToMany, ManyToMany, OneToOne]:
@@ -626,10 +626,10 @@ Vérifions aussi si l'utilisateur est vérifié après la connection et laissons
 Dans mon controller app_home :
 
 ```php
-if(!$this->getUser()->isverified() === true)  
-{  
-    $this->addFlash('warning', 'Veuillez confirmer votre adresse e-mail pour accéder à votre compte.');  
-}
+if($this->getUser() && $this->getUser()->isVerified() === false)
+        {
+            $this->addFlash('warning', 'Veuillez confirmer votre adresse e-mail pour accéder à votre compte.');
+        }
 ```
 
 Et dans le template :
@@ -685,7 +685,7 @@ public function theme(Theme $theme): Response
 ```html
 {% block body %}  
         <h1>{{ theme }}</h1>  
-        <ul>    
+        <ul>  
         {% for post in posts %}  
                 <article>  
                         <header>{{ post.title }}</header>  
@@ -709,7 +709,6 @@ Et changeons notre template home avec les liens :
 {% endfor %}  
 </ul>
 ```
-
 
 Pour finir avec nos liens thème, il serait préférable d'utiliser des slugs plutôt que l'id
 
@@ -776,3 +775,260 @@ et notre template :
 ```
 
 Désormais notre route ne ressemble plus à /theme/12 mais à /theme/nom-du-theme
+
+
+Créons un espace utilisateur, dans lequel l'utilisateur pourra :
+
+- Voir ses posts
+- Modifier un post
+- Créer un post
+- Passer  un post en brouillon/publié
+- Supprimer un post
+
+Pour commencer créons une nouvelle route et un nouveau template :
+
+```php
+#[Route('/mon-espace', name: 'app_mon_espace')]  
+public function monEspace(): Response  
+{  
+    $user = $this->getUser();  
+    $posts = $user->getPosts();  
+  
+    return $this->render('mon_espace/mon_espace.html.twig', [  
+        'user' => $user,  
+        'posts' => $posts  
+    ]);  
+}
+```
+
+Et voici le template :
+
+Il est à noter que nous allons utiliser l'information draft ( Est ce que notre post et en brouillon ou non ?) afin d'afficher le bouton publier ou passer en brouillon.
+
+```html
+{% if post.draft == false %}  
+    <a href="{{ path("app_draft_post", {'id':post.id } )}}" onclick="return confirm('Voulez vous vraiment passer ce post en brouillon ?')"><img alt="logo_edit" style="width: 25px; height: 25px;" src="{{ asset('build/img/draft.svg') }}"/></a>  
+{% else %}  
+<a href="{{ path("app_publish_post", {'id':post.id } )}}" onclick="return confirm('Voulez vous vraiment publier ce post ?')"><img alt="logo_edit" style="width: 25px; height: 25px;" src="{{ asset('build/img/publish.svg') }}"/></a>  
+{% endif %}
+```
+
+```html
+{% block body %}  
+    <h1>Mon espace</h1>  
+    <p>Bienvenue {{ user.name }}</p>  
+    <p><a href="{{ path('app_logout') }}">Déconnexion</a></p>  
+    <p><a href="{{ path('app_home') }}">Retour à l'accueil</a></p>  
+    <a href="{{ path('app_create_post') }}">Créer un post</a>  
+    <ul>        {% for post in posts %}  
+            <article>  
+                <header>  
+                    <div style="display: flex; flex-direction: row; justify-content: space-between; flex-wrap: wrap; align-items: center;">  
+                        <p>{{ post.title }} </p>  
+                        <div>                            <a href="{{ path("app_delete_post", {'id':post.id } )}}" onclick="return confirm('Voulez vous vraiment supprimer ce post ?')"><img alt="logo_delete" style="width: 25px; height: 25px;" src="{{ asset('build/img/delete.svg') }}"/></a>  
+                            <a href="{{ path("app_edit_post", {'id':post.id } )}}"><img alt="logo_edit" style="width: 25px; height: 25px;" src="{{ asset('build/img/edit.svg') }}"/></a>  
+                            {% if post.draft == false %}  
+                                <a href="{{ path("app_draft_post", {'id':post.id } )}}" onclick="return confirm('Voulez vous vraiment passer ce post en brouillon ?')"><img alt="logo_edit" style="width: 25px; height: 25px;" src="{{ asset('build/img/draft.svg') }}"/></a>  
+                            {% else %}  
+                            <a href="{{ path("app_publish_post", {'id':post.id } )}}" onclick="return confirm('Voulez vous vraiment publier ce post ?')"><img alt="logo_edit" style="width: 25px; height: 25px;" src="{{ asset('build/img/publish.svg') }}"/></a>  
+                            {% endif %}  
+                        </div>  
+                    </div>  
+                </header>  
+                {{ post.content }}  
+                <footer>Créé par {{ post.user.name }}  le {{ post.getCreatedAt()|date('Y-m-d') }}</footer>  
+            </article>  
+        {% endfor %}  
+    </ul>  
+{% endblock %}
+
+```
+
+Créons un formulaire pour notre entity Post :
+
+```bash
+ symfony console:make form  
+```
+
+```php
+public function buildForm(FormBuilderInterface $builder, array $options): void  
+{  
+    $builder  
+        ->add('title', TextType::class,[  
+            'label' => 'Titre de l\'article'  
+        ])  
+        ->add('content')  
+        ->add('draft')  
+        ->add('themes', EntityType::class, [  
+            'class' => Theme::class,  
+            'choice_label' => 'nom',  
+            'multiple' => true,  
+            'expanded' => true  
+        ])  
+        ->add('submit', SubmitType::class, [  
+            'label' => 'Créer',  
+            'attr' => [  
+                'class' => 'btn btn-primary'  
+            ]  
+        ]);  
+}
+```
+
+Créons un contrôleur pour créer un post :
+
+```php
+#[Route('/create_post', name: 'app_create_post')]  
+public function createPost(Request $request,EntityManagerInterface $em):Response  
+{  
+    $post = new Post();  
+    $form = $this->createForm(PostType::class,$post);  
+    $form->handleRequest($request);  
+    if ($form->isSubmitted() && $form->isValid()) {  
+        $selectedThemes = $form->get('themes')->getData();  
+  
+        // Associez les thèmes sélectionnés au post et gérons le ManyToMany entre Post et Theme  
+        foreach ($selectedThemes as $theme) {  
+            $post->addTheme($theme);  
+            $theme->addPost($post);  
+        }  
+  
+        $post->setLikes(0);  
+        $post->setUser($this->getUser());  
+        $post->setCreatedAt(new \DateTimeImmutable());  
+  
+        $em->persist($post);  
+        $em->flush();  
+        return $this->redirectToRoute('app_mon_espace');  
+    }  
+    return $this->render('mon_espace/create-post.html.twig',[  
+        'form' => $form->createView()  
+    ]);  
+}
+```
+
+Créons le contrôleur pour supprimer un post :
+
+```php
+#[Route('/delete_post/{id}', name: 'app_delete_post')]  
+public function deletePost(EntityManagerInterface $em, Post $post):Response  
+{  
+    $em->remove($post);  
+    $em->flush();  
+    return $this->redirectToRoute('app_mon_espace');  
+}
+```
+
+Créons le contrôleur pour éditer un post :
+
+```php
+#[Route('/edite_post/{id}', name: 'app_edit_post')]  
+public function editePost(Request $request, EntityManagerInterface $em, Post $post):Response  
+{  
+    $form = $this->createForm(PostType::class, $post);  
+    //ci-dessus, le deuxième argument permet de remplir les champs avec les données de $post  
+  
+    // récupèrons les themes associés au post    $originalThemes = $post->getThemes()->toArray();  
+    $form->handleRequest($request);  
+    if ($form->isSubmitted() && $form->isValid()) {  
+  
+        $selectedThemes = $form->get('themes')->getData()->toArray();  
+        // Nous comparons les themes originaux aux themes choisis dans notre formulaire de modification  
+        // S'il détecte un changement, alors nous allons effacer les anciens thèmes et les remplacer par les nouveaux.        $themesChanged = count(array_diff($originalThemes, $selectedThemes)) > 0 || count(array_diff($selectedThemes, $originalThemes)) > 0;  
+  
+        if ($themesChanged) {  
+  
+            // Ici les thèmes ont changé  
+            // Effaçons alors les thèmes originaux (Dans les deux sens par rapport à la relation de type many to many)            foreach ($originalThemes as $theme) {  
+                $post->removeTheme($theme);  
+                $theme->removePost($post);  
+            }  
+  
+            // Puis associons les nouveaux thèmes au post  
+            foreach ($selectedThemes as $theme) {  
+                $post->addTheme($theme);  
+                $theme->addPost($post);  
+            }  
+        }  
+        $em->persist($post);  
+        $em->flush();  
+        return $this->redirectToRoute('app_mon_espace'); // Redirection vers la page mon espace  
+    }  
+    return $this->render('mon_espace/edite-post.html.twig',[  
+        'form' => $form->createView()  
+    ]);  
+  
+}
+```
+
+Et son template :
+
+```php
+    <h1>Créer un post</h1>  
+    {{ form_start(form) }}  
+    {{ form_row(form.title) }}  
+    {{ form_row(form.content) }}  
+    {{ form_row(form.draft) }}  
+    {{ form_row(form.themes) }}  
+    {{ form_row(form.submit, {'label': 'Modifier'}) }}  
+    {{ form_end(form) }}  
+```
+
+Créons le contrôleur pour passer le post en brouillon  :
+
+```php
+#[Route('/draft_post/{id}', name: 'app_draft_post')]  
+public function draftPost(Post $post, EntityManagerInterface $em):Response  
+{  
+    $post->setDraft(true);  
+    $em->flush();  
+    return $this->redirectToRoute('app_mon_espace');  
+}
+```
+
+Créons le contrôleur pour passer le post en publié  :
+
+```php
+#[Route('/publish_post/{id}', name: 'app_publish_post')]  
+public function publishPost(Post $post, EntityManagerInterface $em):Response  
+{  
+    $post->setDraft(false);  
+    $em->flush();  
+    return $this->redirectToRoute('app_mon_espace');  
+}
+```
+
+Et changeons la requête dans les pages themes pour ne récupérer que les post qui ont le status draft à faux :
+
+Pour ce faire, créons une requête DQL dans le PostRepository :
+
+```php
+public function getPublishedPostsByTheme($theme) 
+// Retourne les posts qui ont le statut publié et ayant le thème recherché  
+{  
+    return $this->createQueryBuilder('p')  
+        ->innerJoin('p.themes', 't')  
+        ->where('t = :theme')  
+        ->andWhere('p.draft = :draft')  
+        ->setParameter('draft', 0)  
+        ->setParameter('theme', $theme)  
+        ->getQuery()  
+        ->getResult();  
+}
+```
+
+Et utilisons la dans notre contrôleur :
+
+```php
+#[Route('/theme/{slug}', name: 'app_theme')]  
+   public function theme(Theme $theme, PostRepository $postRepository): Response  
+   {  
+       $themeName = $theme->getNom();  
+//        $posts = $theme->getPost();  
+       $posts = $postRepository->getPublishedPostsByTheme($theme);  
+ 
+       return $this->render('theme/theme.html.twig', [  
+           'theme' => $themeName,  
+           'posts' => $posts  
+       ]);  
+   }
+```

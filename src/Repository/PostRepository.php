@@ -21,6 +21,21 @@ class PostRepository extends ServiceEntityRepository
         parent::__construct($registry, Post::class);
     }
 
+
+    public function getPublishedPostsByTheme($theme) // Retourne les posts qui ont le statut publié et ayant le thème recherché
+    {
+        return $this->createQueryBuilder('p')
+            ->innerJoin('p.themes', 't')
+            ->where('t = :theme')
+            ->andWhere('p.draft = :draft')
+            ->setParameter('draft', 0)
+            ->setParameter('theme', $theme)
+            ->getQuery()
+            ->getResult();
+    }
+
+
+
 //    /**
 //     * @return Post[] Returns an array of Post objects
 //     */
