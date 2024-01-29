@@ -165,7 +165,7 @@ class HomeController extends AbstractController
                 $theme->addPost($post);
             }
 
-            $post->setLikes(0);
+
             $post->setUser($this->getUser());
             $post->setCreatedAt(new \DateTimeImmutable());
 

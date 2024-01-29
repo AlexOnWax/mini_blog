@@ -24,7 +24,7 @@ class LikeRepository extends ServiceEntityRepository
 //    /**
 //     * @return Like[] Returns an array of Like objects
 //     */
-//    public function findByExampleField($value): array
+//    images function findByExampleField($value): array
 //    {
 //        return $this->createQueryBuilder('l')
 //            ->andWhere('l.exampleField = :val')
@@ -36,7 +36,7 @@ class LikeRepository extends ServiceEntityRepository
 //        ;
 //    }
 
-//    public function findOneBySomeField($value): ?Like
+//    images function findOneBySomeField($value): ?Like
 //    {
 //        return $this->createQueryBuilder('l')
 //            ->andWhere('l.exampleField = :val')

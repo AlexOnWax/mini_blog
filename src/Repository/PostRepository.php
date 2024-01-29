@@ -39,7 +39,7 @@ class PostRepository extends ServiceEntityRepository
 //    /**
 //     * @return Post[] Returns an array of Post objects
 //     */
-//    public function findByExampleField($value): array
+//    images function findByExampleField($value): array
 //    {
 //        return $this->createQueryBuilder('p')
 //            ->andWhere('p.exampleField = :val')
@@ -51,7 +51,7 @@ class PostRepository extends ServiceEntityRepository
 //        ;
 //    }
 
-//    public function findOneBySomeField($value): ?Post
+//    images function findOneBySomeField($value): ?Post
 //    {
 //        return $this->createQueryBuilder('p')
 //            ->andWhere('p.exampleField = :val')

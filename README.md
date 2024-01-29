@@ -217,17 +217,17 @@ New property name (press <return> to stop adding fields):
 
 What type of relationship is this?
  ------------ ----------------------------------------------------------------- 
-  Type         Description                                    
+  Type         Description                                  
  ------------ ----------------------------------------------------------------- 
-  ManyToOne    Each Post relates to (has) one User.           
+  ManyToOne    Each Post relates to (has) one User.         
                Each User can relate to (can have) many Post objects.  
-                                                              
+                                                            
   OneToMany    Each Post can relate to (can have) many User objects.  
-               Each User relates to (has) one Post.           
-                                                              
+               Each User relates to (has) one Post.         
+                                                            
   ManyToMany   Each Post can relate to (can have) many User objects.  
                Each User can also relate to (can also have) many Post objects.  
-                                                              
+                                                            
   OneToOne     Each Post relates to (has) exactly one User.   
                Each User also relates to (has) exactly one Post.  
  ------------ ----------------------------------------------------------------- 
@@ -281,17 +281,17 @@ symfony console make:entity Theme
 
 What type of relationship is this?
  ------------ ------------------------------------------------------------------ 
-  Type         Description                                     
+  Type         Description                                   
  ------------ ------------------------------------------------------------------ 
-  ManyToOne    Each Theme relates to (has) one Post.           
+  ManyToOne    Each Theme relates to (has) one Post.         
                Each Post can relate to (can have) many Theme objects.  
-                                                               
+                                                             
   OneToMany    Each Theme can relate to (can have) many Post objects.  
-               Each Post relates to (has) one Theme.           
-                                                               
+               Each Post relates to (has) one Theme.         
+                                                             
   ManyToMany   Each Theme can relate to (can have) many Post objects.  
                Each Post can also relate to (can also have) many Theme objects.  
-                                                               
+                                                             
   OneToOne     Each Theme relates to (has) exactly one Post.   
                Each Post also relates to (has) exactly one Theme.  
  ------------ ------------------------------------------------------------------ 
@@ -349,7 +349,6 @@ composer require fakerphp/faker
 
 Nous allon créer 3 themes,   5 utilisateurs, et chaques utilisateurs aura aléatoirement entre  2 et 5 posts. TODO
 
-```php
 <?php  
   
 namespace App\DataFixtures;  
@@ -406,7 +405,6 @@ class AppFixtures extends Fixture
                     ->setContent($faker->paragraph(5))  
                     ->setCreatedAt(new \DateTimeImmutable())  
                     ->setDraft(false)  
-                    ->setLikes(0)  
                     ->setUser($user);  
                 //Et nous affectons les themes au post aléatoirement  
                 $randomThemes = (array)array_rand($themes, mt_rand(1, 3));  
@@ -421,7 +419,6 @@ class AppFixtures extends Fixture
   
     }  
 }
-```
 
 #### Lançons  notre fixture :
 
@@ -891,7 +888,6 @@ public function createPost(Request $request,EntityManagerInterface $em):Response
             $theme->addPost($post);  
         }  
   
-        $post->setLikes(0);  
         $post->setUser($this->getUser());  
         $post->setCreatedAt(new \DateTimeImmutable());  
   
@@ -1032,7 +1028,6 @@ Et utilisons la dans notre contrôleur :
        ]);  
    }
 ```
-
 
 ### Gestion du like :
 
