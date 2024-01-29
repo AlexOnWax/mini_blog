@@ -14,7 +14,7 @@ final class Version20240129134834 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return '';
+        return 'Ajout de la table like et suppression de la colonne likes dans la table post';
     }
 
     public function up(Schema $schema): void
