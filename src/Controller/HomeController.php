@@ -2,9 +2,11 @@
 
 namespace App\Controller;
 
+use App\Entity\Like;
 use App\Entity\Post;
 use App\Entity\Theme;
 use App\Form\PostType;
+use App\Repository\LikeRepository;
 use App\Repository\PostRepository;
 use App\Repository\ThemeRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -33,12 +35,12 @@ class HomeController extends AbstractController
     #[Route('/theme/{slug}', name: 'app_theme')]
     public function theme(Theme $theme, PostRepository $postRepository): Response
     {
-        $themeName = $theme->getNom();
+
 //        $posts = $theme->getPost();
         $posts = $postRepository->getPublishedPostsByTheme($theme);
 
         return $this->render('theme/theme.html.twig', [
-            'theme' => $themeName,
+            'theme' => $theme,
             'posts' => $posts
         ]);
     }
@@ -115,6 +117,37 @@ class HomeController extends AbstractController
         $post->setDraft(false);
         $em->flush();
         return $this->redirectToRoute('app_mon_espace');
+    }
+
+    #[Route('/like_post/{id}/{theme}', name: 'app_like_post')]
+    public function likePost(Post $post,Theme $theme, EntityManagerInterface $em, LikeRepository $likeRepository):Response
+    {
+        $user = $this->getUser();
+        // on vérifie si l'utilisateur a liké le post
+
+        //On tente de trouver un like avec l'utilisateur et le post
+        $like = $likeRepository->findOneBy([
+            'user' => $user,
+            'post' => $post
+        ]);
+
+        if($like)
+        {
+            // Si le like existe, on supprime le like
+            $em->remove($like);
+            $em->flush();
+            return $this->redirectToRoute('app_theme', ['slug' => $theme->getSlug()]);
+        }else{
+            // sinon on ajoute le like
+            $like = new Like();
+            $like->setUser($user);
+            $like->setPost($post);
+            $em->persist($like);
+            $em->flush();
+            return $this->redirectToRoute('app_theme', ['slug' => $theme->getSlug()]);
+        }
+
+        return $this->redirectToRoute('app_theme', ['slug' => $theme->getSlug()]);
     }
 
     #[Route('/create_post', name: 'app_create_post')]

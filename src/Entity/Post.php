@@ -28,18 +28,19 @@ class Post
     #[ORM\Column]
     private ?bool $draft = null;
 
-    #[ORM\Column(nullable: true)]
-    private ?int $likes = null;
-
     #[ORM\ManyToOne(inversedBy: 'posts')]
     private ?User $user = null;
 
     #[ORM\ManyToMany(targetEntity: Theme::class, mappedBy: 'post')]
     private Collection $themes;
 
+    #[ORM\OneToMany(mappedBy: 'post', targetEntity: Like::class)]
+    private Collection $likes;
+
     public function __construct()
     {
         $this->themes = new ArrayCollection();
+        $this->likes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -95,18 +96,6 @@ class Post
         return $this;
     }
 
-    public function getLikes(): ?int
-    {
-        return $this->likes;
-    }
-
-    public function setLikes(?int $likes): static
-    {
-        $this->likes = $likes;
-
-        return $this;
-    }
-
     public function getUser(): ?User
     {
         return $this->user;
@@ -141,6 +130,40 @@ class Post
     {
         if ($this->themes->removeElement($theme)) {
             $theme->removePost($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Like>
+     */
+    public function getLikes(): Collection
+    {
+        return $this->likes;
+    }
+
+    public function addLike(Like $like): static
+    {
+        if (!$this->likes->contains($like)) {
+            $this->likes->add($like);
+            $like->setPost($this);
+        }
+
+        return $this;
+    }
+    public function getLikesCount(): int
+    {
+        return $this->likes->count();
+    }
+
+    public function removeLike(Like $like): static
+    {
+        if ($this->likes->removeElement($like)) {
+            // set the owning side to null (unless already changed)
+            if ($like->getPost() === $this) {
+                $like->setPost(null);
+            }
         }
 
         return $this;

@@ -217,18 +217,18 @@ New property name (press <return> to stop adding fields):
 
 What type of relationship is this?
  ------------ ----------------------------------------------------------------- 
-  Type         Description                                      
+  Type         Description                                    
  ------------ ----------------------------------------------------------------- 
-  ManyToOne    Each Post relates to (has) one User.             
+  ManyToOne    Each Post relates to (has) one User.           
                Each User can relate to (can have) many Post objects.  
-                                                                
+                                                              
   OneToMany    Each Post can relate to (can have) many User objects.  
-               Each User relates to (has) one Post.             
-                                                                
+               Each User relates to (has) one Post.           
+                                                              
   ManyToMany   Each Post can relate to (can have) many User objects.  
                Each User can also relate to (can also have) many Post objects.  
-                                                                
-  OneToOne     Each Post relates to (has) exactly one User.     
+                                                              
+  OneToOne     Each Post relates to (has) exactly one User.   
                Each User also relates to (has) exactly one Post.  
  ------------ ----------------------------------------------------------------- 
 
@@ -281,18 +281,18 @@ symfony console make:entity Theme
 
 What type of relationship is this?
  ------------ ------------------------------------------------------------------ 
-  Type         Description                                       
+  Type         Description                                     
  ------------ ------------------------------------------------------------------ 
-  ManyToOne    Each Theme relates to (has) one Post.             
+  ManyToOne    Each Theme relates to (has) one Post.           
                Each Post can relate to (can have) many Theme objects.  
-                                                                 
+                                                               
   OneToMany    Each Theme can relate to (can have) many Post objects.  
-               Each Post relates to (has) one Theme.             
-                                                                 
+               Each Post relates to (has) one Theme.           
+                                                               
   ManyToMany   Each Theme can relate to (can have) many Post objects.  
                Each Post can also relate to (can also have) many Theme objects.  
-                                                                 
-  OneToOne     Each Theme relates to (has) exactly one Post.     
+                                                               
+  OneToOne     Each Theme relates to (has) exactly one Post.   
                Each Post also relates to (has) exactly one Theme.  
  ------------ ------------------------------------------------------------------ 
 
@@ -776,7 +776,6 @@ et notre template :
 
 Désormais notre route ne ressemble plus à /theme/12 mais à /theme/nom-du-theme
 
-
 Créons un espace utilisateur, dans lequel l'utilisateur pourra :
 
 - Voir ses posts
@@ -1019,6 +1018,7 @@ public function getPublishedPostsByTheme($theme)
 Et utilisons la dans notre contrôleur :
 
 ```php
+
 #[Route('/theme/{slug}', name: 'app_theme')]  
    public function theme(Theme $theme, PostRepository $postRepository): Response  
    {  
@@ -1031,4 +1031,72 @@ Et utilisons la dans notre contrôleur :
            'posts' => $posts  
        ]);  
    }
+```
+
+
+### Gestion du like :
+
+Nous allons devoir ajouter une entity dans notre projet. Nous l'appelerons Like, et elle sera en ManyToOne avec user et avec Post.
+
+L'idée est que nous compterons le nombre de résultat que l'entity Like nous donnera pour un post.
+
+```bash
+symfony console make:entity Like
+```
+
+Puis configurer les relations dans la console. ( n'oublions pas de faire notre migration après cela).
+
+Le controlleur :
+
+```php
+#[Route('/like_post/{id}/{theme}', name: 'app_like_post')]  
+public function likePost(Post $post,Theme $theme, EntityManagerInterface $em, LikeRepository $likeRepository):Response  
+{  
+    $user = $this->getUser();  
+    // on vérifie si l'utilisateur a liké le post  
+  
+    //On tente de trouver un like avec l'utilisateur et le post    $like = $likeRepository->findOneBy([  
+        'user' => $user,  
+        'post' => $post  
+    ]);  
+  
+    if($like)  
+    {  
+        // Si le like existe, on supprime le like  
+        $em->remove($like);  
+        $em->flush();  
+        return $this->redirectToRoute('app_theme', ['slug' => $theme->getSlug()]);  
+    }else{  
+        // sinon on ajoute le like  
+        $like = new Like();  
+        $like->setUser($user);  
+        $like->setPost($post);  
+        $em->persist($like);  
+        $em->flush();  
+        return $this->redirectToRoute('app_theme', ['slug' => $theme->getSlug()]);  
+    }  
+  
+    return $this->redirectToRoute('app_theme', ['slug' => $theme->getSlug()]);  
+}
+
+```
+
+Et le template :
+
+```html
+<a href="{{ path('app_like_post', {'id': post.id, 'theme': theme.id } )}}"><img alt="logo_like" style="width: 25px; height: 25px;" src="{{ asset('build/img/like.svg') }}"/>{{ post.getLikesCount() }}</a>
+
+```
+
+Remarquez , qu'ici nous allons utiliser une méthode qui n'existe pas :
+```html{{ post.getLikesCount() }}```
+Nous allons la créer, elle a pour but de nous renvoyer le nombre d'entrées dans l'entity Like ayant ce Post comme relation.
+
+Pour cela, nous ajoutons dans l'entity Post :
+
+```php
+public function getLikesCount(): int  
+{  
+    return $this->likes->count();  
+}
 ```
