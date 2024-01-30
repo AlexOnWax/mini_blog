@@ -217,18 +217,18 @@ New property name (press <return> to stop adding fields):
 
 What type of relationship is this?
  ------------ ----------------------------------------------------------------- 
-  Type         Description                                        
+  Type         Description                                      
  ------------ ----------------------------------------------------------------- 
-  ManyToOne    Each Post relates to (has) one User.               
+  ManyToOne    Each Post relates to (has) one User.             
                Each User can relate to (can have) many Post objects.  
-                                                                  
+                                                                
   OneToMany    Each Post can relate to (can have) many User objects.  
-               Each User relates to (has) one Post.               
-                                                                  
+               Each User relates to (has) one Post.             
+                                                                
   ManyToMany   Each Post can relate to (can have) many User objects.  
                Each User can also relate to (can also have) many Post objects.  
-                                                                  
-  OneToOne     Each Post relates to (has) exactly one User.       
+                                                                
+  OneToOne     Each Post relates to (has) exactly one User.     
                Each User also relates to (has) exactly one Post.  
  ------------ ----------------------------------------------------------------- 
 
@@ -281,18 +281,18 @@ symfony console make:entity Theme
 
 What type of relationship is this?
  ------------ ------------------------------------------------------------------ 
-  Type         Description                                         
+  Type         Description                                       
  ------------ ------------------------------------------------------------------ 
-  ManyToOne    Each Theme relates to (has) one Post.               
+  ManyToOne    Each Theme relates to (has) one Post.             
                Each Post can relate to (can have) many Theme objects.  
-                                                                   
+                                                                 
   OneToMany    Each Theme can relate to (can have) many Post objects.  
-               Each Post relates to (has) one Theme.               
-                                                                   
+               Each Post relates to (has) one Theme.             
+                                                                 
   ManyToMany   Each Theme can relate to (can have) many Post objects.  
                Each Post can also relate to (can also have) many Theme objects.  
-                                                                   
-  OneToOne     Each Theme relates to (has) exactly one Post.       
+                                                                 
+  OneToOne     Each Theme relates to (has) exactly one Post.     
                Each Post also relates to (has) exactly one Theme.  
  ------------ ------------------------------------------------------------------ 
 
@@ -1124,11 +1124,75 @@ Et juste en suivant la doc du bundle :```https://github.com/dustin10/VichUploade
 
 Nous changeons légèrement notre entity Post.
 
+
 Et évidement notre formulaire en ajoutant :
 
 ```php
 ->add('imageFile', VichFileType::class, [  
     'label' => 'Image',  
+    'allow_delete' => true,  
+    'download_uri' => false,  
     'required' => false,  
 ])
+```
+
+Et une petite modification sur la page edit pour afficher l'image uploadé :
+
+```html
+{% block body %}  
+  
+    <h1>Modifier un post</h1>  
+    {{ form_start(form) }}  
+    {{ form_row(form.title) }}  
+    {{ form_row(form.content) }}  
+    {{ form_row(form.imageFile) }}  
+    {% if form.vars.value.imageFilename %}  
+        <div>  
+            <img src="{{ vich_uploader_asset(post,'imageFile') }}" alt="Miniature">  
+        </div>  
+    {% endif %}  
+    {{ form_row(form.draft) }}  
+    {{ form_row(form.themes) }}  
+    {{ form_row(form.submit, {'label': 'Modifier'}) }}  
+    {{ form_end(form) }}  
+{% endblock %}
+
+```
+
+Attention penser à la suppression des likes lors de la suppression d'un post :
+Ajoutons dans l'entity Post ```cascade: ['remove']```  :
+
+```php
+#[ORM\OneToMany(mappedBy: 'post', targetEntity: Like::class, cascade: ['remove'])]  
+private Collection $likes;
+```
+
+Changer le controller d'édition pour traiter la suppression et ré-upload d'image :
+
+```php
+//Si l'user delete une image, nous traitons la suppression de l'image  
+if($form->get('imageFile')->getData() === null && $form->get('imageFile')->getData() === null)  
+{  
+    $post->setImageFilename(null);  
+    $post->setImageSize(null);  
+}else{  
+    //Si l'user upload une nouvelle image, alors traitons l'upload de l'image  
+    $post->setImageFilename($form->get('imageFile')->getData()->getFilename());  
+    $post->setImageSize($form->get('imageFile')->getData()->getSize());  
+}
+```
+
+Regardons maintenant comment afficher notre image dans nos post :
+
+```html
+        <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">  
+                <div>  
+                        <p>{{ post.content }}</p>  
+                </div>  
+                {% if post.imageFilename  %}  
+                <div>  
+                        <img width="300px" src="{{ asset('images/posts/' ~ post.imageFilename) }}" alt="Image">  
+                </div>  
+                {% endif %}  
+        </div>  
 ```

@@ -17,7 +17,17 @@
                                         </div>
                                 </div>
                         </header>
-                        {{ post.content }}
+                        <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+                                <div>
+                                        <p>{{ post.content }}</p>
+                                </div>
+                                {% if post.imageFilename  %}
+                                <div>
+                                        <img width="300px" src="{{ asset('images/posts/' ~ post.imageFilename) }}" alt="Image">
+                                </div>
+                                {% endif %}
+                        </div>
+
                         <footer>Créé par {{ post.user.name }}  le {{ post.getCreatedAt()|date('Y-m-d') }}</footer>
                 </article>
         {% endfor %}

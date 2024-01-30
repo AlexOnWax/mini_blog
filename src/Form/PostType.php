@@ -25,6 +25,8 @@ class PostType extends AbstractType
             ->add('content')
             ->add('imageFile', VichFileType::class, [
                 'label' => 'Image',
+                'allow_delete' => true,
+                'download_uri' => false,
                 'required' => false,
             ])
             ->add('draft')

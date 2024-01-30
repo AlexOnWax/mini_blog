@@ -37,13 +37,14 @@ class Post
     #[ORM\ManyToMany(targetEntity: Theme::class, mappedBy: 'post')]
     private Collection $themes;
 
-    #[ORM\OneToMany(mappedBy: 'post', targetEntity: Like::class)]
+    #[ORM\OneToMany(mappedBy: 'post', targetEntity: Like::class, cascade: ['remove'])]
     private Collection $likes;
 
     #[Vich\UploadableField(mapping: 'posts', fileNameProperty: 'imageFilename', size: 'imageSize')]
     private ?File $imageFile = null;
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $imageFilename = null;
+
     #[ORM\Column(nullable: true)]
     private ?int $imageSize = null;
     /**

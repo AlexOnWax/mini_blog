@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Vich\UploaderBundle\Form\Type\VichFileType;
 
 class HomeController extends AbstractController
 {
@@ -64,6 +65,31 @@ class HomeController extends AbstractController
         return $this->redirectToRoute('app_mon_espace');
     }
 
+    #[Route('/delete_image/{id}', name: 'app_remove_image')]
+    public function deleteImage(EntityManagerInterface $em, Post $post):Response
+    {
+        //Supprimer le fichier image dans le dossier public/uploads/posts
+        $file = $this->getParameter('kernel.project_dir').'/public/images/posts/'.$post->getImageFilename();
+        ;
+        if (file_exists($file)) {
+
+            unlink($file);
+        }
+
+        $post->setImageFilename(null);
+        $post->setImageSize(null);
+
+        $em->persist($post);
+        $em->flush();
+        // Rafraîchir l'entité Post
+        $em->refresh($post);
+
+        $this->addFlash('success', 'L\'image a bien été supprimée');
+
+        // Rediriger l'utilisateur vers le formulaire
+        return $this->redirectToRoute('app_edit_post', ['id' => $post->getId()]);
+    }
+
     #[Route('/edite_post/{id}', name: 'app_edit_post')]
     public function editePost(Request $request, EntityManagerInterface $em, Post $post):Response
     {
@@ -74,6 +100,17 @@ class HomeController extends AbstractController
         $originalThemes = $post->getThemes()->toArray();
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
+
+            //Si l'user delete une image, nous traitons la suppression de l'image
+            if($form->get('imageFile')->getData() === null && $form->get('imageFile')->getData() === null)
+            {
+                $post->setImageFilename(null);
+                $post->setImageSize(null);
+            }else{
+                //Si l'user upload une nouvelle image, alors traitons l'upload de l'image
+                $post->setImageFilename($form->get('imageFile')->getData()->getFilename());
+                $post->setImageSize($form->get('imageFile')->getData()->getSize());
+            }
 
             $selectedThemes = $form->get('themes')->getData()->toArray();
             // Nous comparons les themes originaux aux themes choisis dans notre formulaire de modification
@@ -100,7 +137,8 @@ class HomeController extends AbstractController
             return $this->redirectToRoute('app_mon_espace'); // Redirection vers la page mon espace
         }
         return $this->render('mon_espace/edite-post.html.twig',[
-            'form' => $form->createView()
+            'form' => $form->createView(),
+            'post' => $post
         ]);
 
     }

@@ -1,13 +1,19 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hello HomeController!{% endblock %}
+{% block title %}Modifier un post{% endblock %}
 
 {% block body %}
-    <h1>Créer un post</h1>
+
+    <h1>Modifier un post</h1>
     {{ form_start(form) }}
     {{ form_row(form.title) }}
     {{ form_row(form.content) }}
     {{ form_row(form.imageFile) }}
+    {% if form.vars.value.imageFilename %}
+        <div>
+            <img src="{{ vich_uploader_asset(post,'imageFile') }}" alt="Miniature">
+        </div>
+    {% endif %}
     {{ form_row(form.draft) }}
     {{ form_row(form.themes) }}
     {{ form_row(form.submit, {'label': 'Modifier'}) }}
