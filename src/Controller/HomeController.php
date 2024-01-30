@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Vich\UploaderBundle\Form\Type\VichFileType;
 
 class HomeController extends AbstractController
@@ -34,6 +35,7 @@ class HomeController extends AbstractController
     }
 
     #[Route('/theme/{slug}', name: 'app_theme')]
+    #[isGranted('ROLE_USER')]
     public function theme(Theme $theme, PostRepository $postRepository): Response
     {
 
@@ -46,6 +48,7 @@ class HomeController extends AbstractController
         ]);
     }
     #[Route('/mon-espace', name: 'app_mon_espace')]
+    #[isGranted('ROLE_USER')]
     public function monEspace(): Response
     {
         $user = $this->getUser();
@@ -58,6 +61,7 @@ class HomeController extends AbstractController
     }
 
     #[Route('/delete_post/{id}', name: 'app_delete_post')]
+    #[isGranted('ROLE_USER')]
     public function deletePost(EntityManagerInterface $em, Post $post):Response
     {
         $em->remove($post);
@@ -66,6 +70,7 @@ class HomeController extends AbstractController
     }
 
     #[Route('/delete_image/{id}', name: 'app_remove_image')]
+    #[isGranted('ROLE_USER')]
     public function deleteImage(EntityManagerInterface $em, Post $post):Response
     {
         //Supprimer le fichier image dans le dossier public/uploads/posts
@@ -91,6 +96,7 @@ class HomeController extends AbstractController
     }
 
     #[Route('/edite_post/{id}', name: 'app_edit_post')]
+    #[isGranted('edit', subject: 'post')]
     public function editePost(Request $request, EntityManagerInterface $em, Post $post):Response
     {
         $form = $this->createForm(PostType::class, $post);
@@ -143,6 +149,7 @@ class HomeController extends AbstractController
 
     }
     #[Route('/draft_post/{id}', name: 'app_draft_post')]
+    #[isGranted('ROLE_USER')]
     public function draftPost(Post $post, EntityManagerInterface $em):Response
     {
         $post->setDraft(true);
@@ -189,6 +196,7 @@ class HomeController extends AbstractController
     }
 
     #[Route('/create_post', name: 'app_create_post')]
+    #[isGranted('ROLE_USER')]
     public function createPost(Request $request,EntityManagerInterface $em):Response
     {
         $post = new Post();

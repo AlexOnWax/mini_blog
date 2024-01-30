@@ -217,18 +217,18 @@ New property name (press <return> to stop adding fields):
 
 What type of relationship is this?
  ------------ ----------------------------------------------------------------- 
-  Type         Description                                      
+  Type         Description                                    
  ------------ ----------------------------------------------------------------- 
-  ManyToOne    Each Post relates to (has) one User.             
+  ManyToOne    Each Post relates to (has) one User.           
                Each User can relate to (can have) many Post objects.  
-                                                                
+                                                              
   OneToMany    Each Post can relate to (can have) many User objects.  
-               Each User relates to (has) one Post.             
-                                                                
+               Each User relates to (has) one Post.           
+                                                              
   ManyToMany   Each Post can relate to (can have) many User objects.  
                Each User can also relate to (can also have) many Post objects.  
-                                                                
-  OneToOne     Each Post relates to (has) exactly one User.     
+                                                              
+  OneToOne     Each Post relates to (has) exactly one User.   
                Each User also relates to (has) exactly one Post.  
  ------------ ----------------------------------------------------------------- 
 
@@ -281,18 +281,18 @@ symfony console make:entity Theme
 
 What type of relationship is this?
  ------------ ------------------------------------------------------------------ 
-  Type         Description                                       
+  Type         Description                                     
  ------------ ------------------------------------------------------------------ 
-  ManyToOne    Each Theme relates to (has) one Post.             
+  ManyToOne    Each Theme relates to (has) one Post.           
                Each Post can relate to (can have) many Theme objects.  
-                                                                 
+                                                               
   OneToMany    Each Theme can relate to (can have) many Post objects.  
-               Each Post relates to (has) one Theme.             
-                                                                 
+               Each Post relates to (has) one Theme.           
+                                                               
   ManyToMany   Each Theme can relate to (can have) many Post objects.  
                Each Post can also relate to (can also have) many Theme objects.  
-                                                                 
-  OneToOne     Each Theme relates to (has) exactly one Post.     
+                                                               
+  OneToOne     Each Theme relates to (has) exactly one Post.   
                Each Post also relates to (has) exactly one Theme.  
  ------------ ------------------------------------------------------------------ 
 
@@ -1124,7 +1124,6 @@ Et juste en suivant la doc du bundle :```https://github.com/dustin10/VichUploade
 
 Nous changeons légèrement notre entity Post.
 
-
 Et évidement notre formulaire en ajoutant :
 
 ```php
@@ -1195,4 +1194,73 @@ Regardons maintenant comment afficher notre image dans nos post :
                 </div>  
                 {% endif %}  
         </div>  
+```
+
+
+### Sécurisons nos routes avec les rôles :
+
+```php
+#[Route('/mon-espace', name: 'app_mon_espace')]  
+#[isGranted('ROLE_USER')]
+```
+
+Créons un Voter pour le crud de nos posts, nous voulons que ce soit l'auteur qui puisse éditer son post :
+
+```bash
+Symfony console make:voter PostEdit
+```
+
+Editons un voter simple.
+
+Il nous permettra juste de sécuriser le route 'édite' afin de s'assurer qu'un autre utilisateur ne pourra pas accèder à l'édition d'un post ne lui appartenant pas :
+
+```php
+class PostEditVoter extends Voter  
+{  
+    const EDIT = 'edit';  
+  
+    protected function supports(string $attribute, mixed $subject): bool  
+    {  
+  
+        if (!in_array($attribute, [self::EDIT])) {  
+            return false;  
+        }  
+        if (!$subject instanceof post) {  
+            return false;  
+        }  
+  
+        return true;  
+    }  
+  
+    protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool  
+    {  
+        $user = $token->getUser();  
+  
+  
+        if (!$user instanceof User) {  
+            return false;  
+        }  
+  
+        // Ici $subject $subject correspond à un objet Post  
+        /** @var Post $post */  
+        $post = $subject;  
+  
+        return match($attribute) {  
+            self::EDIT => $this->canEdit($post, $user),  
+            default => throw new \LogicException('This code should not be reached!')  
+        };  
+    }  
+  
+    private function canEdit(Post $post, User $user): bool  
+    {  
+  
+        return $user === $post->getUser();  
+    }  
+}
+
+```
+
+```php
+#[Route('/edite_post/{id}', name: 'app_edit_post')]  
+#[isGranted('edit', subject: 'post')]
 ```
