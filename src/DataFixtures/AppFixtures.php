@@ -56,11 +56,10 @@ class AppFixtures extends Fixture
             //Pour chaque utilisateur, nous créons entre 2 et 5 articles
             for ($p = 0; $p < mt_rand(2, 5); $p++) {
                 $post = new Post();
-                $post->setTitle($faker->sentence())
+                $post->setTitle('titre'.$p)
                     ->setContent($faker->paragraph(5))
                     ->setCreatedAt(new \DateTimeImmutable())
                     ->setDraft(false)
-                    ->setLikes(0)
                     ->setUser($user);
                 //Et nous affectons les themes au post aléatoirement
                 $randomThemes = (array)array_rand($themes, mt_rand(1, 3));

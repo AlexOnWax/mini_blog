@@ -217,17 +217,17 @@ New property name (press <return> to stop adding fields):
 
 What type of relationship is this?
  ------------ ----------------------------------------------------------------- 
-  Type         Description                                    
+  Type         Description                                  
  ------------ ----------------------------------------------------------------- 
-  ManyToOne    Each Post relates to (has) one User.           
+  ManyToOne    Each Post relates to (has) one User.         
                Each User can relate to (can have) many Post objects.  
-                                                              
+                                                            
   OneToMany    Each Post can relate to (can have) many User objects.  
-               Each User relates to (has) one Post.           
-                                                              
+               Each User relates to (has) one Post.         
+                                                            
   ManyToMany   Each Post can relate to (can have) many User objects.  
                Each User can also relate to (can also have) many Post objects.  
-                                                              
+                                                            
   OneToOne     Each Post relates to (has) exactly one User.   
                Each User also relates to (has) exactly one Post.  
  ------------ ----------------------------------------------------------------- 
@@ -281,17 +281,17 @@ symfony console make:entity Theme
 
 What type of relationship is this?
  ------------ ------------------------------------------------------------------ 
-  Type         Description                                     
+  Type         Description                                   
  ------------ ------------------------------------------------------------------ 
-  ManyToOne    Each Theme relates to (has) one Post.           
+  ManyToOne    Each Theme relates to (has) one Post.         
                Each Post can relate to (can have) many Theme objects.  
-                                                               
+                                                             
   OneToMany    Each Theme can relate to (can have) many Post objects.  
-               Each Post relates to (has) one Theme.           
-                                                               
+               Each Post relates to (has) one Theme.         
+                                                             
   ManyToMany   Each Theme can relate to (can have) many Post objects.  
                Each Post can also relate to (can also have) many Theme objects.  
-                                                               
+                                                             
   OneToOne     Each Theme relates to (has) exactly one Post.   
                Each Post also relates to (has) exactly one Theme.  
  ------------ ------------------------------------------------------------------ 
@@ -1196,7 +1196,6 @@ Regardons maintenant comment afficher notre image dans nos post :
         </div>  
 ```
 
-
 ### Sécurisons nos routes avec les rôles :
 
 ```php
@@ -1263,4 +1262,200 @@ class PostEditVoter extends Voter
 ```php
 #[Route('/edite_post/{id}', name: 'app_edit_post')]  
 #[isGranted('edit', subject: 'post')]
+```
+
+
+Les tests, qu'est-ce que c'est ?
+
+Ce sont des morceaux de code qui permettent de tester l'application. C'est très intéressant car à chaque fois que l'on écrit du code, cela permet de vérifier les bugs.
+
+Avec PHPUnit, nous allons pouvoir effectuer des tests en utilisant la commande
+
+```
+php bin/unit
+```
+
+ou
+
+```
+php bin/phpunit tests/nomdutest.php
+```
+
+Pour créer les tests, nous utilisons la commande suivante :
+
+```bash
+symfony console make:test
+```
+
+Il faut choisir `KernelTestCase` pour les tests sur les entités, car grâce à lui, nous pouvons démarrer le noyau de Symfony, ce qui revient à lancer l'application. Ces tests sont basiques et ont accès aux services Symfony.
+
+Pour tester les formulaires, il faut choisir `WebTestCase`, qui permet d'exécuter des scénarios de navigation de manière similaire à un navigateur, mais sans exécuter le code JavaScript.
+
+Il est nécessaire de créer une base de données de test au préalable. Pour cela, ajoutez les informations suivantes dans le fichier `.env.test` :
+
+```
+DATABASE_URL=mysql://root:root@127.0.0.1:8889/test_database?charset=utf8mb4
+```
+
+Pour lancer les migrations en mode test, utilisez la commande suivante :
+
+```
+php bin/console doctrine:migrations:migrate --env=test
+```
+
+Pour charger les fixtures en mode test, utilisez la commande suivante :
+
+```
+php bin/console doctrine:fixtures:load --env=test
+```
+
+Voici le premier test sur la connexion, qui vérifie si l'utilisateur saisit de mauvaises données :
+
+tests/TestLoginWithErrorsTest.php
+
+```php
+class TestLoginWithErrorsTest extends WebTestCase  
+{  
+    public function testSomething(): void  
+    {  
+        $client = static::createClient();  
+        $crawler = $client->request('GET', '/login');  
+  
+        $form = $crawler->selectButton('Sign in')->form([  
+            'email' => 'toto@titi.fr',  
+            'password' => 'wrongpassword'  
+        ]);  
+        $client->submit($form);  
+        $this->assertResponseRedirects('/login');  
+        $client->followRedirect();  
+        $this->assertSelectorExists('.alert.alert-danger');  
+  
+    }  
+  
+}
+```
+
+Voici le deuxième test sur le login qui vérifie si l'user met de bonnes données :
+
+tests/TestLoginWithGoodCredentialsTest.php
+
+```php
+class TestLoginWithGoodCredentialsTest extends WebTestCase  
+{  
+    public function testSomething(): void  
+    {  
+        $client = static::createClient();  
+        $crawler = $client->request('GET', '/login');  
+  
+        $form = $crawler->selectButton('Sign in')->form([  
+            'email' => 'phamon@hardy.com',  
+            'password' => 'password'  
+        ]);  
+        $client->submit($form);  
+        $this->assertResponseRedirects('/');  
+        $client->followRedirect();  
+    }  
+}
+```
+
+Et le Test de l'entity Post :
+
+tests/PostTest.php
+
+```php
+
+class PostTest extends KernelTestCase  
+{  
+    private EntityManager $entityManager;  
+  
+    protected function setUp(): void  
+    {  
+        $kernel = self::bootKernel();  
+  
+        $this->entityManager = $kernel->getContainer()  
+            ->get('doctrine')  
+            ->getManager();  
+    }  
+  
+    //Créer un post  
+    public function testValidPost(): void  
+    {  
+        $post = new Post();  
+        $post->setTitle('titre')  
+            ->setContent('contenu')  
+            ->setDraft(false)  
+            ->setCreatedAt(new \DateTimeImmutable())  
+            ->setUser($this->entityManager  
+                ->getRepository(User::class)  
+                ->findOneBy(['id' => 1]));  
+  
+        $this->entityManager->persist($post);  
+        $this->entityManager->flush();  
+  
+        $this->assertSame('titre', $post->getTitle());  
+        $newPostId = $post->getId();  
+  
+        //Nous testons dans la foulé la suppression du post  
+        $this->entityManager->remove($post);  
+        $this->entityManager->flush();  
+        $this->assertNull(  
+            $this->entityManager  
+                ->getRepository(Post::class)  
+                ->findOneBy(['id' => $newPostId])  
+        );  
+  
+    }  
+  
+  
+    //Edition d'un post  
+    public function testEditPost(): void  
+    {  
+        $post = $this->entityManager  
+            ->getRepository(Post::class)  
+            ->findOneBy(['id' => 2])  
+        ;  
+  
+        $post->setTitle('titre modifié');  
+        $post->setContent('contenu modifié');  
+        $post->setDraft(true);  
+  
+  
+        $this->entityManager->flush();  
+  
+        $this->assertSame('titre modifié', $post->getTitle());  
+    }  
+  
+    //Ajout d'une image dans un post  
+    public function testAddImage(): void  
+    {  
+        $post = $this->entityManager  
+            ->getRepository(Post::class)  
+            ->findOneBy(['id' => 2])  
+        ;  
+  
+        $post->setImageFilename('image.jpg');  
+        $post->setImageSize(100);  
+  
+        $this->entityManager->flush();  
+  
+        $this->assertSame('image.jpg', $post->getImageFilename());  
+    }  
+  
+    //Suppression d'une image dans un post  
+    public function testDeleteImage(): void  
+    {  
+        $post = $this->entityManager  
+            ->getRepository(Post::class)  
+            ->findOneBy(['id' => 2])  
+        ;  
+  
+        $post->setImageFilename(null);  
+        $post->setImageSize(null);  
+  
+        $this->entityManager->flush();  
+  
+        $this->assertNull($post->getImageFilename());  
+    }  
+}
+
 ```
