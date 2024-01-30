@@ -217,18 +217,18 @@ New property name (press <return> to stop adding fields):
 
 What type of relationship is this?
  ------------ ----------------------------------------------------------------- 
-  Type         Description                                  
+  Type         Description                                        
  ------------ ----------------------------------------------------------------- 
-  ManyToOne    Each Post relates to (has) one User.         
+  ManyToOne    Each Post relates to (has) one User.               
                Each User can relate to (can have) many Post objects.  
-                                                            
+                                                                  
   OneToMany    Each Post can relate to (can have) many User objects.  
-               Each User relates to (has) one Post.         
-                                                            
+               Each User relates to (has) one Post.               
+                                                                  
   ManyToMany   Each Post can relate to (can have) many User objects.  
                Each User can also relate to (can also have) many Post objects.  
-                                                            
-  OneToOne     Each Post relates to (has) exactly one User.   
+                                                                  
+  OneToOne     Each Post relates to (has) exactly one User.       
                Each User also relates to (has) exactly one Post.  
  ------------ ----------------------------------------------------------------- 
 
@@ -281,18 +281,18 @@ symfony console make:entity Theme
 
 What type of relationship is this?
  ------------ ------------------------------------------------------------------ 
-  Type         Description                                   
+  Type         Description                                         
  ------------ ------------------------------------------------------------------ 
-  ManyToOne    Each Theme relates to (has) one Post.         
+  ManyToOne    Each Theme relates to (has) one Post.               
                Each Post can relate to (can have) many Theme objects.  
-                                                             
+                                                                   
   OneToMany    Each Theme can relate to (can have) many Post objects.  
-               Each Post relates to (has) one Theme.         
-                                                             
+               Each Post relates to (has) one Theme.               
+                                                                   
   ManyToMany   Each Theme can relate to (can have) many Post objects.  
                Each Post can also relate to (can also have) many Theme objects.  
-                                                             
-  OneToOne     Each Theme relates to (has) exactly one Post.   
+                                                                   
+  OneToOne     Each Theme relates to (has) exactly one Post.       
                Each Post also relates to (has) exactly one Theme.  
  ------------ ------------------------------------------------------------------ 
 
@@ -347,8 +347,9 @@ composer require --dev orm-fixtures
 composer require fakerphp/faker
 ```
 
-Nous allon créer 3 themes,   5 utilisateurs, et chaques utilisateurs aura aléatoirement entre  2 et 5 posts. TODO
+Nous allon créer 3 themes,   5 utilisateurs, et chaques utilisateurs aura aléatoirement entre  2 et 5 posts.
 
+```php
 <?php  
   
 namespace App\DataFixtures;  
@@ -405,6 +406,7 @@ class AppFixtures extends Fixture
                     ->setContent($faker->paragraph(5))  
                     ->setCreatedAt(new \DateTimeImmutable())  
                     ->setDraft(false)  
+                    ->setLikes(0)  
                     ->setUser($user);  
                 //Et nous affectons les themes au post aléatoirement  
                 $randomThemes = (array)array_rand($themes, mt_rand(1, 3));  
@@ -419,6 +421,7 @@ class AppFixtures extends Fixture
   
     }  
 }
+```
 
 #### Lançons  notre fixture :
 
@@ -623,10 +626,10 @@ Vérifions aussi si l'utilisateur est vérifié après la connection et laissons
 Dans mon controller app_home :
 
 ```php
-if($this->getUser() && $this->getUser()->isVerified() === false)
-        {
-            $this->addFlash('warning', 'Veuillez confirmer votre adresse e-mail pour accéder à votre compte.');
-        }
+if(!$this->getUser()->isverified() === true)  
+{  
+    $this->addFlash('warning', 'Veuillez confirmer votre adresse e-mail pour accéder à votre compte.');  
+}
 ```
 
 Et dans le template :
@@ -888,6 +891,7 @@ public function createPost(Request $request,EntityManagerInterface $em):Response
             $theme->addPost($post);  
         }  
   
+        $post->setLikes(0);  
         $post->setUser($this->getUser());  
         $post->setCreatedAt(new \DateTimeImmutable());  
   
@@ -1014,7 +1018,6 @@ public function getPublishedPostsByTheme($theme)
 Et utilisons la dans notre contrôleur :
 
 ```php
-
 #[Route('/theme/{slug}', name: 'app_theme')]  
    public function theme(Theme $theme, PostRepository $postRepository): Response  
    {  
@@ -1094,4 +1097,38 @@ public function getLikesCount(): int
 {  
     return $this->likes->count();  
 }
+```
+
+Pour commencer nous allons devoir ajouter dans notre entity Post un moyen de stocker le chemin des images uploadées.
+
+Nous allons donc la modifier et ajouter une entrée de type string que l'on nommera par exemple imageFilename, qui peut être null.
+
+Et nous allons utiliser composer pour installer la bibliotheque VichUploader.
+
+```bash
+composer require vich/uploader-bundle
+```
+
+Dans config/package/vich_uploader.yaml
+
+```yaml
+mappings:  
+    products:  
+        uri_prefix: /images/posts  
+        upload_destination: '%kernel.project_dir%/public/images/posts'  
+        namer: Vich\UploaderBundle\Naming\SmartUniqueNamer
+	    delete_on_remove: true
+```
+
+Et juste en suivant la doc du bundle :```https://github.com/dustin10/VichUploaderBundle/blob/master/docs/index.md```
+
+Nous changeons légèrement notre entity Post.
+
+Et évidement notre formulaire en ajoutant :
+
+```php
+->add('imageFile', VichFileType::class, [  
+    'label' => 'Image',  
+    'required' => false,  
+])
 ```
