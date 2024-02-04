@@ -8,7 +8,7 @@ if (!Encore.isRuntimeEnvironmentConfigured()) {
 
 Encore
     // directory where compiled assets will be stored
-    .setOutputPath('images/build/')
+    .setOutputPath('public/build/')
     // images path used by the web server to access the output path
     .setPublicPath('/build')
     // only needed for CDN's or subdirectory deploy
@@ -75,7 +75,7 @@ Encore
         //to: 'images/[path][name].[ext]',
 
         //if versioning is enabled, add the file hash too
-        to: 'img/[path][name].[hash:8].[ext]',
+        to: 'img/[path][name].[ext]',
         //only copy files matching this pattern
         //pattern: /\.(png|jpg|jpeg)$/
     })

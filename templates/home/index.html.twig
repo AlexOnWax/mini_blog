@@ -5,9 +5,11 @@
 {% block body %}
 <h1>Accueil</h1>
 
-    {% for message in app.flashes('warning') %}
-        <div class="warning">
-            {{ message }}
+    {% for rubrique, messages in app.flashes %}
+        <div class="{{ rubrique }}">
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
         </div>
     {% endfor %}
 
@@ -18,4 +20,6 @@
         </li>
     {% endfor %}
     </ul>
+    <a href="{{ path('app_test')}}">TEST</a>
+
 {% endblock %}

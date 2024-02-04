@@ -7,13 +7,22 @@
         <ul>
         {% for post in posts %}
                 <article>
+
                         <header>
                                 <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
                                         <div>
                                                 <p>{{ post.title }}</p>
                                         </div>
-                                        <div>
-                                                <a href="{{ path('app_like_post', {'id': post.id, 'theme': theme.id } )}}"><img alt="logo_like" style="width: 25px; height: 25px;" src="{{ asset('build/img/like.svg') }}"/>{{ post.getLikesCount() }}</a>
+                                        <div class="like-button like_container">
+                                                {% if app.user and post.isLikedByUser(app.user) %}
+                                                        <img alt="logo_like" style="width: 25px; height: 25px;" src="{{ asset('img/isliked.svg') }}"/>
+                                                {% else %}
+                                                        <img alt="logo_not_like" style="width: 25px; height: 25px;" src="{{ asset('img/isnotliked.svg') }}"/>
+                                                {% endif %}
+                                                <a href="{{ path('app_like_post', {'id': post.id} )}}" >
+
+                                                        {{ post.getLikesCount() }}
+                                                </a>
                                         </div>
                                 </div>
                         </header>
@@ -33,3 +42,10 @@
         {% endfor %}
         </ul>
 {% endblock %}
+
+
+
+
+
+
+

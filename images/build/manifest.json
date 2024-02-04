@@ -2,6 +2,7 @@
   "build/app.css": "/build/app.css",
   "build/app.js": "/build/app.js",
   "build/runtime.js": "/build/runtime.js",
+  "build/vendors-node_modules_core-js_modules_es_object_to-string_js-node_modules_core-js_modules_es_p-2a1352.js": "/build/vendors-node_modules_core-js_modules_es_object_to-string_js-node_modules_core-js_modules_es_p-2a1352.js",
   "build/img/publish.svg": "/build/img/publish.565f17f6.svg",
   "build/img/delete.svg": "/build/img/delete.c47ae319.svg",
   "build/img/edit.svg": "/build/img/edit.da37e62f.svg",

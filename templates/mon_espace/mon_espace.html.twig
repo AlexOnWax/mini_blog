@@ -15,12 +15,12 @@
                     <div style="display: flex; flex-direction: row; justify-content: space-between; flex-wrap: wrap; align-items: center;">
                         <p>{{ post.title }} </p>
                         <div>
-                            <a href="{{ path("app_delete_post", {'id':post.id } )}}" onclick="return confirm('Voulez vous vraiment supprimer ce post ?')"><img alt="logo_delete" style="width: 25px; height: 25px;" src="{{ asset('build/img/delete.svg') }}"/></a>
-                            <a href="{{ path("app_edit_post", {'id':post.id } )}}"><img alt="logo_edit" style="width: 25px; height: 25px;" src="{{ asset('build/img/edit.svg') }}"/></a>
+                            <a href="{{ path("app_delete_post", {'id':post.id } )}}" onclick="return confirm('Voulez vous vraiment supprimer ce post ?')"><img alt="logo_delete" style="width: 25px; height: 25px;" src="{{ asset('img/delete.svg') }}"/></a>
+                            <a href="{{ path("app_edit_post", {'id':post.id } )}}"><img alt="logo_edit" style="width: 25px; height: 25px;" src="{{ asset('img/edit.svg') }}"/></a>
                             {% if post.draft == false %}
-                                <a href="{{ path("app_draft_post", {'id':post.id } )}}" onclick="return confirm('Voulez vous vraiment passer ce post en brouillon ?')"><img alt="logo_edit" style="width: 25px; height: 25px;" src="{{ asset('build/img/draft.svg') }}"/></a>
+                                <a href="{{ path("app_draft_post", {'id':post.id } )}}" onclick="return confirm('Voulez vous vraiment passer ce post en brouillon ?')"><img alt="logo_edit" style="width: 25px; height: 25px;" src="{{ asset('img/draft.svg') }}"/></a>
                             {% else %}
-                            <a href="{{ path("app_publish_post", {'id':post.id } )}}" onclick="return confirm('Voulez vous vraiment publier ce post ?')"><img alt="logo_edit" style="width: 25px; height: 25px;" src="{{ asset('build/img/publish.svg') }}"/></a>
+                            <a href="{{ path("app_publish_post", {'id':post.id } )}}" onclick="return confirm('Voulez vous vraiment publier ce post ?')"><img alt="logo_edit" style="width: 25px; height: 25px;" src="{{ asset('img/publish.svg') }}"/></a>
                             {% endif %}
                         </div>
                     </div>

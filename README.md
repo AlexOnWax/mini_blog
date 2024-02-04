@@ -217,17 +217,17 @@ New property name (press <return> to stop adding fields):
 
 What type of relationship is this?
  ------------ ----------------------------------------------------------------- 
-  Type         Description                                  
+  Type         Description                              
  ------------ ----------------------------------------------------------------- 
-  ManyToOne    Each Post relates to (has) one User.         
+  ManyToOne    Each Post relates to (has) one User.     
                Each User can relate to (can have) many Post objects.  
-                                                            
+                                                        
   OneToMany    Each Post can relate to (can have) many User objects.  
-               Each User relates to (has) one Post.         
-                                                            
+               Each User relates to (has) one Post.     
+                                                        
   ManyToMany   Each Post can relate to (can have) many User objects.  
                Each User can also relate to (can also have) many Post objects.  
-                                                            
+                                                        
   OneToOne     Each Post relates to (has) exactly one User.   
                Each User also relates to (has) exactly one Post.  
  ------------ ----------------------------------------------------------------- 
@@ -281,17 +281,17 @@ symfony console make:entity Theme
 
 What type of relationship is this?
  ------------ ------------------------------------------------------------------ 
-  Type         Description                                   
+  Type         Description                               
  ------------ ------------------------------------------------------------------ 
-  ManyToOne    Each Theme relates to (has) one Post.         
+  ManyToOne    Each Theme relates to (has) one Post.     
                Each Post can relate to (can have) many Theme objects.  
-                                                             
+                                                         
   OneToMany    Each Theme can relate to (can have) many Post objects.  
-               Each Post relates to (has) one Theme.         
-                                                             
+               Each Post relates to (has) one Theme.     
+                                                         
   ManyToMany   Each Theme can relate to (can have) many Post objects.  
                Each Post can also relate to (can also have) many Theme objects.  
-                                                             
+                                                         
   OneToOne     Each Theme relates to (has) exactly one Post.   
                Each Post also relates to (has) exactly one Theme.  
  ------------ ------------------------------------------------------------------ 
@@ -1264,7 +1264,6 @@ class PostEditVoter extends Voter
 #[isGranted('edit', subject: 'post')]
 ```
 
-
 Les tests, qu'est-ce que c'est ?
 
 Ce sont des morceaux de code qui permettent de tester l'application. C'est très intéressant car à chaque fois que l'on écrit du code, cela permet de vérifier les bugs.
@@ -1459,3 +1458,120 @@ class PostTest extends KernelTestCase
 }
 
 ```
+
+
+## Bonus : Gérer les likes en asynchrone (sans recharger la page) :
+
+Dans l'entity  Post, créer une nouvelle méthode 'isLikeByUser'
+
+```php
+
+public function isLikedByUser(User $user): bool  
+{  
+    foreach ($this->likes as $like) {  
+        if ($like->getUser() === $user) {  
+            return true;  
+        }  
+    }  
+    return false;  
+}
+```
+
+cette fonction vérifie si l'user a déjà posté un like.
+
+Pour gérer l'AJAX, nous allons installer Axios
+`https://github.com/axios/axios`
+
+```bash
+npm install axios
+```
+
+Modifions notre contrôleur :
+
+Cette nouvelle version du contrôleur commence par vérifier s'il existe un user, puis check si il a déjà une like pour ce Post et le supprime, ou créé un nouveau like s'il n'a pas liké.
+Nous renvoyons une réponse en JSON afin de facilement l'utiliser dans notre Javascript.
+
+```php
+#[Route('/like_post/{id}', name: 'app_like_post')]  
+public function likePost(Post $post, EntityManagerInterface $em, LikeRepository $likeRepository): Response  
+{  
+   $user = $this->getUser();  
+   if (!$user) {  
+       return $this->json(['code' => 403, 'message' => 'Unauthorized'], 403);  
+   }  
+ 
+   if ($post->isLikedByUser($user)) {  
+       $like = $likeRepository->findOneBy([  
+           'post' => $post,  
+           'user' => $user  
+       ]);  
+       $em->remove($like);  
+       $em->flush();  
+       return $this->json(['code' => 200, 'message' => 'Disliké', 'likes' => $likeRepository->count(['post' => $post])], 200);  
+   }  
+   $like = new Like();  
+   $like->setPost($post);  
+   $like->setUser($user);  
+   $em->persist($like);  
+   $em->flush();  
+ 
+   return $this->json(['code'=>200,'message'=> 'Liké', 'likes' => $likeRepository->count(['post' => $post])], 200);  
+}
+
+```
+
+Et aussi notre template :
+Au chargement de la page, nous affectons un logo et le nombre de likes existant dans la base de données.
+
+```html
+<header>  
+        <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">  
+                <div>  
+                        <p>{{ post.title }}</p>  
+                </div>  
+                <div class="like-button like_container">  
+                        {% if app.user and post.isLikedByUser(app.user) %}  
+                                <img alt="logo_like" style="width: 25px; height: 25px;" src="{{ asset('img/isliked.svg') }}"/>  
+                        {% else %}  
+                                <img alt="logo_not_like" style="width: 25px; height: 25px;" src="{{ asset('img/isnotliked.svg') }}"/>  
+                        {% endif %}  
+                        <a href="{{ path('app_like_post', {'id': post.id} )}}" >  
+  
+                                {{ post.getLikesCount() }}  
+                        </a>  
+                </div>  
+        </div>  
+</header>
+```
+
+Et concernant le Javascript :
+
+ici nous faisons de l'AJAX et nous changeons le dom en fonction du résultat dans data.
+
+```js
+import axios from 'axios';  
+document.addEventListener('DOMContentLoaded', function() {  
+    function onClickLike(event) {  
+        event.preventDefault();  
+        const url = this.href;  
+        const link = this;  
+        axios.get(url).then(function(response) {  
+            const likes = response.data.likes;  
+            const img = link.parentElement.querySelector('img');  
+           console.log(link);  
+                if (likes > 0) {  
+                    img.src = "/build/img/isliked.svg";  
+                    link.innerHTML = likes;  
+                } else {  
+                    img.src = "/build/img/isnotliked.svg";  
+                    link.innerHTML = likes;  
+                }  
+        });  
+    }  
+    document.querySelectorAll('.like-button > a').forEach(function (link) {  
+        link.addEventListener('click', onClickLike);  
+    });  
+});
+```
+
+Nous avons maintenant une modification des like sans recharger la page, ce qui est beaucoup plus propre pour l'experience utilisateur.

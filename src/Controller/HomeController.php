@@ -10,6 +10,7 @@ use App\Repository\LikeRepository;
 use App\Repository\PostRepository;
 use App\Repository\ThemeRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,8 +24,7 @@ class HomeController extends AbstractController
     public function index(ThemeRepository $themeRepository): Response
     {
         // si l'user est connecté et que son email n'est pas vérifié
-        if($this->getUser() && $this->getUser()->isVerified() === false)
-        {
+        if ($this->getUser() && $this->getUser()->isVerified() === false) {
             $this->addFlash('warning', 'Veuillez confirmer votre adresse e-mail pour accéder à votre compte.');
         }
 
@@ -33,6 +33,18 @@ class HomeController extends AbstractController
             'themes' => $themes
         ]);
     }
+
+    #[Route('/test', name: 'app_test')]
+    public function test(ThemeRepository $themeRepository): Response
+    {
+        $themes = $themeRepository->findAll();
+        $this->addFlash('success', 'Top ca marche !');
+
+        return $this->redirectToRoute('app_home', [
+            'themes' => $themes
+        ]);
+    }
+
 
     #[Route('/theme/{slug}', name: 'app_theme')]
     #[isGranted('ROLE_USER')]
@@ -47,6 +59,7 @@ class HomeController extends AbstractController
             'posts' => $posts
         ]);
     }
+
     #[Route('/mon-espace', name: 'app_mon_espace')]
     #[isGranted('ROLE_USER')]
     public function monEspace(): Response
@@ -62,7 +75,7 @@ class HomeController extends AbstractController
 
     #[Route('/delete_post/{id}', name: 'app_delete_post')]
     #[isGranted('ROLE_USER')]
-    public function deletePost(EntityManagerInterface $em, Post $post):Response
+    public function deletePost(EntityManagerInterface $em, Post $post): Response
     {
         $em->remove($post);
         $em->flush();
@@ -71,11 +84,10 @@ class HomeController extends AbstractController
 
     #[Route('/delete_image/{id}', name: 'app_remove_image')]
     #[isGranted('ROLE_USER')]
-    public function deleteImage(EntityManagerInterface $em, Post $post):Response
+    public function deleteImage(EntityManagerInterface $em, Post $post): Response
     {
         //Supprimer le fichier image dans le dossier public/uploads/posts
-        $file = $this->getParameter('kernel.project_dir').'/public/images/posts/'.$post->getImageFilename();
-        ;
+        $file = $this->getParameter('kernel.project_dir') . '/public/images/posts/' . $post->getImageFilename();;
         if (file_exists($file)) {
 
             unlink($file);
@@ -97,7 +109,7 @@ class HomeController extends AbstractController
 
     #[Route('/edite_post/{id}', name: 'app_edit_post')]
     #[isGranted('edit', subject: 'post')]
-    public function editePost(Request $request, EntityManagerInterface $em, Post $post):Response
+    public function editePost(Request $request, EntityManagerInterface $em, Post $post): Response
     {
         $form = $this->createForm(PostType::class, $post);
         //ci-dessus, le deuxième argument permet de remplir les champs avec les données de $post
@@ -108,11 +120,10 @@ class HomeController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
 
             //Si l'user delete une image, nous traitons la suppression de l'image
-            if($form->get('imageFile')->getData() === null && $form->get('imageFile')->getData() === null)
-            {
+            if ($form->get('imageFile')->getData() === null && $form->get('imageFile')->getData() === null) {
                 $post->setImageFilename(null);
                 $post->setImageSize(null);
-            }else{
+            } else {
                 //Si l'user upload une nouvelle image, alors traitons l'upload de l'image
                 $post->setImageFilename($form->get('imageFile')->getData()->getFilename());
                 $post->setImageSize($form->get('imageFile')->getData()->getSize());
@@ -142,58 +153,58 @@ class HomeController extends AbstractController
             $em->flush();
             return $this->redirectToRoute('app_mon_espace'); // Redirection vers la page mon espace
         }
-        return $this->render('mon_espace/edite-post.html.twig',[
+        return $this->render('mon_espace/edite-post.html.twig', [
             'form' => $form->createView(),
             'post' => $post
         ]);
 
     }
+
     #[Route('/draft_post/{id}', name: 'app_draft_post')]
     #[isGranted('ROLE_USER')]
-    public function draftPost(Post $post, EntityManagerInterface $em):Response
+    public function draftPost(Post $post, EntityManagerInterface $em): Response
     {
         $post->setDraft(true);
         $em->flush();
         return $this->redirectToRoute('app_mon_espace');
     }
+
     #[Route('/publish_post/{id}', name: 'app_publish_post')]
-    public function publishPost(Post $post, EntityManagerInterface $em):Response
+    public function publishPost(Post $post, EntityManagerInterface $em): Response
     {
         $post->setDraft(false);
         $em->flush();
         return $this->redirectToRoute('app_mon_espace');
     }
 
-    #[Route('/like_post/{id}/{theme}', name: 'app_like_post')]
-    public function likePost(Post $post,Theme $theme, EntityManagerInterface $em, LikeRepository $likeRepository):Response
+    #[Route('/like_post/{id}', name: 'app_like_post')]
+    public function likePost(Post $post, EntityManagerInterface $em, LikeRepository $likeRepository): Response
     {
         $user = $this->getUser();
-        // on vérifie si l'utilisateur a liké le post
-
-        //On tente de trouver un like avec l'utilisateur et le post
-        $like = $likeRepository->findOneBy([
-            'user' => $user,
-            'post' => $post
-        ]);
-
-        if($like)
-        {
-            // Si le like existe, on supprime le like
-            $em->remove($like);
-            $em->flush();
-            return $this->redirectToRoute('app_theme', ['slug' => $theme->getSlug()]);
-        }else{
-            // sinon on ajoute le like
-            $like = new Like();
-            $like->setUser($user);
-            $like->setPost($post);
-            $em->persist($like);
-            $em->flush();
-            return $this->redirectToRoute('app_theme', ['slug' => $theme->getSlug()]);
+        if (!$user) {
+            return $this->json(['code' => 403, 'message' => 'Unauthorized'], 403);
         }
 
-        return $this->redirectToRoute('app_theme', ['slug' => $theme->getSlug()]);
+        if ($post->isLikedByUser($user)) {
+            $like = $likeRepository->findOneBy([
+                'post' => $post,
+                'user' => $user
+            ]);
+            $em->remove($like);
+            $em->flush();
+            return $this->json(['code' => 200, 'message' => 'Disliké', 'likes' => $likeRepository->count(['post' => $post])], 200);
+        }
+        $like = new Like();
+        $like->setPost($post);
+        $like->setUser($user);
+        $em->persist($like);
+        $em->flush();
+
+        return $this->json(['code'=>200,'message'=> 'Liké', 'likes' => $likeRepository->count(['post' => $post])], 200);
     }
+
+
+
 
     #[Route('/create_post', name: 'app_create_post')]
     #[isGranted('ROLE_USER')]
